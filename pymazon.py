@@ -110,7 +110,7 @@ class Downloader(object):
     def download(self):
         for track in self.track_list:
             fname = os.path.join(self.dir_name, track['title']+'.mp3')
-            save_file = open(fname, 'w')
+            save_file = open(fname, 'wb')
             request = urllib2.Request(track['uri'])
             url = self.opener.open(request)
             print 'downloading track %s by %s on album %s' % \
