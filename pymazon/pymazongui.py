@@ -50,8 +50,9 @@ class AmzFileWidget(QWidget):
         filefilter = "Amazon MP3 Download (*.amz)"
         cdir = os.getcwd()
         f = str(QFileDialog.getOpenFileName(self, caption, cdir, filefilter))
-        self.file_text.setText(f)
-        self.newAmzFile.emit(f)
+        if f:
+            self.file_text.setText(f)
+            self.newAmzFile.emit(f)
         
 
 class DirWidget(QWidget):
