@@ -16,7 +16,7 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import os, sys, base64, re, urllib2, threading, logging, datetime
+import os, sys, base64, re, urllib2, threading, logging, datetime, cStringIO
 
 try:
     from Crypto.Cipher import DES
@@ -126,7 +126,7 @@ class Downloader(threading.Thread):
     Downloader Status Codes emitted to the callback:
     
     0 - Connecting
-    1 - Downloading
+    1 - Downloading Percent
     2 - Complete
     3 - Error
     4 - Downloading Finished
@@ -149,7 +149,8 @@ class Downloader(threading.Thread):
         for track in self.track_list:
             if self.abort:
                 break
-                
+            
+            # Create the URL Request
             request = urllib2.Request(track['url'])
             
             self.callback(track, 0)
@@ -160,21 +161,36 @@ class Downloader(threading.Thread):
                 self.callback(track, 3)
                 continue
             
-            self.callback(track, 1)
+            # Download the track
+            fs = int(track['filesize'])
+            perc_complete = 0
+            chunk_size = fs / 100
+            buf = cStringIO.StringIO()
+            self.callback(track, 1, perc_complete)
             try:
-                mp3 = url.read()
+                while True:
+                    chunk = url.read(chunk_size)
+                    if not chunk:
+                        break
+                    buf.write(chunk)
+                    perc_complete += 1
+                    if perc_complete > 100:
+                        perc_complete = 100
+                    self.callback(track, 1, perc_complete)
+                mp3 = buf.getvalue()
             except:
                 logger.error('Reading from opened url %s' % track)
                 self.callback(track, 3)
-                continue
+                continue 
+            buf.close()
             
-            fs = int(track['filesize'])
             if len(mp3) != fs:
                 logger.error('Expected file size != downloaded size %s' 
                              % track)
                 self.callback(track, 3)
                 continue
             
+            # Write track to File
             try:
                 fname = os.path.join(self.dir_name, track['title']+'.mp3')
                 save_file = open(fname, 'wb')

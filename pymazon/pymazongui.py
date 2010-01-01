@@ -254,12 +254,15 @@ class MainWidget(QWidget):
         self.table_model = TrackTableModel(amz_file)
         self.table.set_new_model(self.table_model)
     
-    def downloader_callback(self, track, status):
+    def downloader_callback(self, track, status, *args):
         if status == 4:
             self.downloader = None
             self.dl_button.setEnabled(True)
-        else:
+        else:            
             msg = self.dl_messages[status]
+            if args:
+                perc = args[0]
+                msg += ('%s%%' % perc)
             self.table_model.set_download_status(track, msg)
     
     def download_tracks(self):

@@ -84,12 +84,15 @@ def main():
             raise RuntimeError(msg)
             sys.exit()
             
-        def dl_printer(track, status):
-            if status == 1:
+        def dl_printer(track, status, *args):
+            if status == 0:
                 print('Downloading track %s by %s on album %s. ' 
                       % (track['title'], track['artist'], track['album']))
+            elif status == 1:
+                sys.stdout.write('.')
+                sys.stdout.flush()
             elif status == 2:
-                print 'Complete!\n'
+                print('Complete!')
             elif status == 3:
                 print 'Error - Check Log!'
             elif status == 4:
