@@ -1,20 +1,26 @@
 #!/usr/bin/env python
 
 from distutils.core import setup
+from distutils.command.install_scripts import install_scripts
 
-# create the bat for windows so the launcher script
-# works out of the box
-import os
-import sys
-if os.name == 'nt':
-    parts = os.path.split(sys.executable)
-    py_path = os.path.join(*(parts[:-1]))
-    script_path = os.path.join(py_path, 'Scripts')
-    f = open(os.path.join(script_path, 'pymazon.bat'), 'w')
-    pymazon = os.path.join(script_path, 'pymazon')
-    bat = '@' + ('"%s" "%s"' % (sys.executable, pymazon)) + ' %*' 
-    f.write(bat)
-    f.close()
+
+class InstallScripts(install_scripts):
+    '''create the bat for windows so the launcher script
+    works out of the box'''
+    def run(self):
+        import os        
+        if os.name == 'nt':
+            import sys
+            parts = os.path.split(sys.executable)
+            py_path = os.path.join(*(parts[:-1]))
+            script_path = os.path.join(py_path, 'Scripts')
+            f = open(os.path.join(script_path, 'pymazon.bat'), 'w')
+            pymazon = os.path.join(script_path, 'pymazon')
+            bat = '@' + ('"%s" "%s"' % (sys.executable, pymazon)) + ' %*' 
+            f.write(bat)
+            f.close()
+        install_scripts.run(self)
+
 
 setup(name='Pymazon',
       version='0.1beta',
@@ -32,5 +38,6 @@ using the .amz file provided by Amazon after the purchase. Pymazon can be
 used as both a command line client or a gui (if PyQt4 is installed). The 
 only hard external dependency is PyCrypto, which is available in the 
 Ubuntu (and likely other distro's) repositories (python-crypto), 
-and the cheese shop.''' 
+and the cheese shop.''', 
+      cmdclass={'install_scripts': InstallScripts},
      )
