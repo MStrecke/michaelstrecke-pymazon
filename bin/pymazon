@@ -87,7 +87,7 @@ def main():
         def dl_printer(track, status, *args):
             if status == 0:
                 print('Downloading track %s by %s on album %s. ' 
-                      % (track['title'], track['artist'], track['album']))
+                      % (track.title, track.artist, track.album))
             elif status == 1:
                 sys.stdout.write('.')
                 sys.stdout.flush()

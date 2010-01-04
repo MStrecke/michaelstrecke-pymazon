@@ -104,9 +104,19 @@ class AmzParser(object):
                   'tracknum': tracknum, 'album': album, 'image': image,
                   'filesize': filesize}
                   
-            parsed_tracks.append(pd)
+            parsed_tracks.append(Track(pd))
             
         return parsed_tracks
+
+
+class Track(object):
+    def __init__(self, track_info):       
+        for key, value in track_info.iteritems():
+            setattr(self, key, value)
+        self.status = ''
+        
+    def __str__(self):
+        return str(self.__dict__)
         
         
 class Decryptor(object):
@@ -134,6 +144,9 @@ class Downloader(threading.Thread):
     
     def __init__(self, dir_name, track_list, callback):
         super(Downloader, self).__init__()
+        for track in track_list:
+            if type(track) != Track:
+                raise ValueError('track must be of type Track')
         self.track_list = track_list
         self.dir_name = dir_name
         self.redirects = urllib2.HTTPRedirectHandler()
@@ -151,7 +164,7 @@ class Downloader(threading.Thread):
                 break
             
             # Create the URL Request
-            request = urllib2.Request(track['url'])
+            request = urllib2.Request(track.url)
             
             self.callback(track, 0)
             try:
@@ -162,7 +175,7 @@ class Downloader(threading.Thread):
                 continue
             
             # Download the track
-            fs = int(track['filesize'])
+            fs = int(track.filesize)
             perc_complete = 0
             chunk_size = fs / 100
             buf = cStringIO.StringIO()
@@ -192,7 +205,7 @@ class Downloader(threading.Thread):
             
             # Write track to File
             try:
-                fname = os.path.join(self.dir_name, track['title']+'.mp3')
+                fname = os.path.join(self.dir_name, track.title + '.mp3')
                 save_file = open(fname, 'wb')
                 save_file.write(mp3)
                 save_file.close()    
