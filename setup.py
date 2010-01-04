@@ -2,6 +2,20 @@
 
 from distutils.core import setup
 
+# create the bat for windows so the launcher script
+# works out of the box
+import os
+import sys
+if os.name == 'nt':
+    parts = os.path.split(sys.executable)
+    py_path = os.path.join(*(parts[:-1]))
+    script_path = os.path.join(py_path, 'Scripts')
+    f = open(os.path.join(script_path, 'pymazon.bat'), 'w')
+    pymazon = os.path.join(script_path, 'pymazon')
+    bat = '@' + ('"%s" "%s"' % (sys.executable, pymazon)) + ' %*' 
+    f.write(bat)
+    f.close()
+
 setup(name='Pymazon',
       version='0.1beta',
       description='Python Based Downloader for the Amazon mp3 Store',
