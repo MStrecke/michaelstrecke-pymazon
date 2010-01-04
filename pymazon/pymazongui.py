@@ -87,52 +87,7 @@ class AlbumArt(QLabel):
     def create_pixmap(self, img_data):
         pm = QPixmap()
         pm.loadFromData(img_data, None, Qt.AutoColor)
-        return pm   
-        
-        
-class TrackModel(object):
-    
-    unique_urls = set()
-    img_map = {}
-                     
-    def __init__(self, track):
-        self.track = track
-        if track is None:
-            self.null_track = True
-        else:
-            for attr, value in track.iteritems():
-                setattr(self, attr, value)
-            self.null_track = False
-        self.create_image_map()
-        self.status = ''
-                        
-    def __getitem__(self, attr):
-        if self.null_track:
-            return ''        
-        else:
-            return getattr(self, attr)    
-    
-    def __str__(self):
-        return str(self.track)
-        
-    def set_status(self, status):
-        self.status = status
-        
-    def get_album_art(self):
-        return AlbumArt(self.img_map[self['image']])
-        
-    def create_image_map(self):
-        url = self['image']
-        if url not in self.unique_urls:
-            self.unique_urls.add(url)       
-            try:
-                uurl = urllib2.urlopen(url)
-                img_data = uurl.read()
-                uurl.close()
-            except (urllib2.URLError, ValueError):
-                img_data = ''                
-            self.img_map[url] = img_data
-           
+        return pm           
       
 
 class TrackTableModel(QAbstractTableModel):
@@ -141,22 +96,37 @@ class TrackTableModel(QAbstractTableModel):
     header_map = {'Art':'image', 'Track #':'tracknum', 'Title':'title',
                   'Artist':'artist', 'Album':'album', 
                   'Download Status':'status'}
+    unique_urls = set()
+    img_map = {}
         
     def __init__(self, amz_file=None, parent=None, *args):
         super(TrackTableModel, self).__init__(parent, *args)
         self.amz_file = amz_file
-        self.t_data = []
-        self.has_tracks = False
+        self.t_data = []        
         self.create_table_data()        
-            
+        self.get_album_jpgs()        
+        
     def create_table_data(self):
         if self.amz_file is None:
-            self.t_data = [TrackModel(None)]
+            return
         else:
-            parsed_tracks = parse_tracks(self.amz_file)
-            self.t_data = [TrackModel(pt) for pt in parsed_tracks]
-            self.has_tracks = True
-                        
+            self.t_data = parse_tracks(self.amz_file)           
+    
+    def get_album_jpgs(self):
+        if not self.t_data:
+            return
+        for track in self.t_data:
+            url = track.image
+            if url not in self.unique_urls:
+                self.unique_urls.add(url)       
+                try:
+                    uurl = urllib2.urlopen(url)
+                    img_data = uurl.read()
+                    uurl.close()
+                except (urllib2.URLError, ValueError):
+                    img_data = ''                
+                self.img_map[url] = img_data
+                
     def rowCount(self, parent):
         return len(self.t_data)
     
@@ -171,7 +141,7 @@ class TrackTableModel(QAbstractTableModel):
         key = self.header_map[self.header[idx.column()]]
         if key=='image':
             return ''
-        return self.t_data[idx.row()][key]
+        return getattr(self.t_data[idx.row()], key)
         
     def headerData(self, idx, orientation, role):
         if orientation == Qt.Horizontal and role == Qt.DisplayRole:
@@ -180,18 +150,18 @@ class TrackTableModel(QAbstractTableModel):
             return None
     
     def get_album_art(self, idx):
-        return self.t_data[idx].get_album_art()
+        url = self.t_data[idx].image
+        jpg = self.img_map[url]
+        art = AlbumArt(jpg)
+        return art
         
     def set_download_status(self, track, status):
         self.layoutAboutToBeChanged.emit()
-        track.set_status(status)
+        track.status = status
         self.layoutChanged.emit()
         
     def get_tracks(self):
-        if not self.has_tracks:
-            return None
-        else:
-            return self.t_data
+        return self.t_data
         
         
 class TrackTable(QTableView):
