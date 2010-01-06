@@ -106,6 +106,7 @@ def main():
         dl.join()        
         
     # remove a log with no info
+    logging.shutdown()
     f = open(LOG_FILENAME, 'r')
     n = len(f.read())
     f.close()
