@@ -47,9 +47,8 @@ class AmzFileWidget(QWidget):
         
     def onClick(self):
         caption = 'Choose AMZ File'
-        filefilter = "Amazon MP3 Download (*.amz)"
-        cdir = os.getcwd()
-        f = str(QFileDialog.getOpenFileName(self, caption, cdir, filefilter))
+        filefilter = "Amazon MP3 Download (*.amz)"        
+        f = str(QFileDialog.getOpenFileName(self, caption, '', filefilter))
         if f:
             self.file_text.setText(f)
             self.newAmzFile.emit(f)
@@ -71,10 +70,10 @@ class DirWidget(QWidget):
         return str(self.dir_text.text())
         
     def onClick(self):
-        caption = 'Choose Save Directory'
-        cdir = self.get_dir()
-        ndir = str(QFileDialog.getExistingDirectory())
-        self.dir_text.setText(ndir)
+        caption = 'Choose Save Directory'        
+        ndir = str(QFileDialog.getExistingDirectory(None, caption))
+        if ndir:
+            self.dir_text.setText(ndir)        
        
         
 class AlbumArt(QLabel):
