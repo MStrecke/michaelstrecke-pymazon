@@ -114,6 +114,4 @@ def main():
         os.remove(LOG_FILENAME)
     
 if __name__=='__main__':  
-    main()
-    
-        
+    main() 
