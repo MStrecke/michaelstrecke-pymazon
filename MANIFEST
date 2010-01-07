@@ -1,6 +1,9 @@
+README.txt
+LICENSE.txt
+INSTALL.txt
+CHANGELOG.txt
 setup.py
 ./bin/pymazon
 pymazon/__init__.py
 pymazon/pymazonbackend.py
 pymazon/pymazongui.py
-*.txt
