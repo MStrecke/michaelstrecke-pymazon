@@ -1,4 +1,21 @@
 #!/usr/bin/env python
+"""
+Pymazon - A Python based downloader for the Amazon.com MP3 store
+Copyright (c) 2009 Steven C. Colbert
+
+This program is free software: you can redistribute it and/or
+modify it under the terms of the GNU General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""
 
 from distutils.core import setup
 from distutils.command.install_scripts import install_scripts
@@ -23,7 +40,7 @@ class InstallScripts(install_scripts):
 
 
 setup(name='Pymazon',
-      version='0.1beta',
+      version='0.1.0',
       description='Python Based Downloader for the Amazon mp3 Store',
       author='S. Chris Colbert',
       author_email='sccolbert@gmail.com',

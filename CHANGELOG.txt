@@ -1,0 +1,16 @@
+Pymazon Changelog
+
+0.1.0
+-----
+- Fixed empty log file deletion exception on Windows
+- Added download progress indicator
+- Fixed script launching issue on Windows by writing a 
+  .bat launcher during setup.py install
+- Change the default folder browsing behavior to be 
+  more intuitive.
+- Refactored some classes to make more sense and 
+  ease future maintainability. 
+  
+0.1beta
+-------
+Initial Release
