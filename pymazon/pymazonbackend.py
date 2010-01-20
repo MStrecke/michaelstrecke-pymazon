@@ -17,6 +17,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import os, sys, base64, re, urllib2, threading, logging, datetime, cStringIO
+from xml.etree import cElementTree
+from collections import deque
 
 try:
     from Crypto.Cipher import DES
@@ -40,64 +42,52 @@ class ParseException(Exception):
 
 
 class AmzParser(object):
-    def __init__(self, amz_data):        
-        self.amz = amz_data        
-        self.re_tag = re.compile(r'<.*?>')        
-        self.re_tracks = re.compile(r'<track>.*?</track>', re.DOTALL)
-        self.re_url = re.compile(r'<location>.*?</location>')
-        self.re_artist = re.compile(r'<creator>.*?</creator>')
-        self.re_title = re.compile(r'<title>.*?</title>')
-        self.re_tracknum = re.compile(r'<trackNum>.*?</trackNum>')
-        self.re_album = re.compile(r'<album>.*?</album>')
-        self.re_image = re.compile(r'<image>.*?</image>')
-        self.re_filesize = re.compile(r'<meta.*?fileSize">.*?</meta>')        
+    
+    namespace = 'http://xspf.org/ns/0/'    
+            
+    def __call__(self, filename):
+        f = open(filename, 'rb')
+        data = f.read()
+        f.close()
+        decryptor = Decryptor()
+        amz_xml = decryptor.decrypt(data)
+        return self.parse(amz_xml)
         
-    def strip_tags(self, phrase):        
-        tags = self.re_tag.findall(phrase)
-        ltag = tags[0]
-        rtag = tags[-1]        
-        return phrase.replace(ltag, '').replace(rtag, '').replace('&amp;', '&')     
+    def _strip_trailing_bytes(self, amz_xml):
+        # strips the 8byte-even-block padding to make 
+        # a valid xml file
+        match = re.match(r'.*</playlist>', amz_xml, re.DOTALL)
+        if not match:
+            raise ParseException('Failure stripping ending XML padding')
+        return match.group()             
         
-    def parse(self):
+    def parse(self, amz_xml):
+        xml = self._strip_trailing_bytes(amz_xml)
+        
+        try:
+            tree = cElementTree.fromstring(xml)
+        except SyntaxError:
+            raise ParseException('Failure parsing XML, ill-formed XML.')
+        
         parsed_tracks = []
-        tracks = self.re_tracks.findall(self.amz)
+        
+        tracklist = tree.find('{%s}trackList' % self.namespace)
+        tracks = tracklist.findall('{%s}track' % self.namespace)        
         if not tracks:            
             raise ParseException('Failure Parsing Tracks')
-        for track in tracks:
-            match = self.re_url.search(track)
-            if not match:
-                raise ParseException('Failure Parsing URL')
-            url = self.strip_tags(match.group())
-            
-            match = self.re_artist.search(track)
-            if not match:
-                raise ParseException('Failure Parsing Artist')
-            artist = self.strip_tags(match.group())
-            
-            match = self.re_title.search(track)
-            if not match:
-                raise ParseException('Failure Parsing Title')
-            title = self.strip_tags(match.group())
-            
-            match = self.re_tracknum.search(track)
-            if not match:
-                raise ParseException('Failure Parsing Track Number')
-            tracknum = self.strip_tags(match.group())
-            
-            match = self.re_album.search(track)
-            if not match:
-                raise ParseException('Failure Parsing Album Name')
-            album = self.strip_tags(match.group())
-            
-            match = self.re_image.search(track)
-            if not match:
-                raise ParseException('Failure Parsing Image')
-            image = self.strip_tags(match.group())
-            
-            match = self.re_filesize.search(track)
-            if not match:
-                raise ParseException('Failure Parsing File Size')
-            filesize = self.strip_tags(match.group())
+        
+        for track in tracks:            
+            url = track.find('{%s}location' % self.namespace).text            
+            artist = track.find('{%s}creator' % self.namespace).text
+            title = track.find('{%s}title' % self.namespace).text
+            tracknum = track.find('{%s}trackNum' % self.namespace).text
+            album = track.find('{%s}album' % self.namespace).text
+            image = track.find('{%s}image' % self.namespace).text
+            metas = track.findall('{%s}meta' % self.namespace)
+            for meta in metas:
+                if meta.attrib['rel'].endswith('fileSize'):
+                    filesize = meta.text
+                    break    
             
             pd = {'url': url, 'artist': artist, 'title': title, 
                   'tracknum': tracknum, 'album': album, 'image': image,
@@ -106,6 +96,8 @@ class AmzParser(object):
             parsed_tracks.append(Track(pd))
             
         return parsed_tracks
+
+parse_tracks = AmzParser()
 
 
 class Track(object):
@@ -119,16 +111,95 @@ class Track(object):
         
         
 class Decryptor(object):
-    def __init__(self, f):
+    def __init__(self,):
         self.key = KEY
         self.iv = IV
-        self.d_obj = DES.new(self.key, DES.MODE_CBC, IV)
-        self.data = f.read()
+        self.d_obj = DES.new(self.key, DES.MODE_CBC, IV)        
         
-    def decrypt(self):
-        cipher = base64.b64decode(self.data)
+    def decrypt(self, amz_data):
+        cipher = base64.b64decode(amz_data)
         return self.d_obj.decrypt(cipher)
+
+
+class _DownloadWorker(threading.Thread):
+    '''A very simple thread worker for the download thread pool'''
+    
+    def __init__(self, feed, status_callback, dir_name):
+        super(_DownloadWorker, self).__init__()
+        self.feed = feed
+        self.callback = status_callback
+        self.dir_name = dir_name
+        self.abort = False
+        self.redirects = urllib2.HTTPRedirectHandler()
+        self.cookies =  urllib2.HTTPCookieProcessor()
+        self.opener = urllib2.build_opener(self.redirects, self.cookies)
+    
+    def kill(self):
+        self.abort = True
         
+    def run(self):
+        while not self.abort:
+            track = self.feed()
+            if not track:
+                break
+            self.work(track)        
+        
+    def work(self, track):
+        # Create the URL Request
+        request = urllib2.Request(track.url)
+            
+        self.callback(track, 0)
+        try:
+            url = self.opener.open(request)
+        except urllib2.URLError:
+            logger.error('Opening request %s' % track)
+            self.callback(track, 3)
+            return
+        
+        # Download the track
+        fs = int(track.filesize)
+        perc_complete = 0
+        chunk_size = fs / 100
+        buf = cStringIO.StringIO()
+        self.callback(track, 1, perc_complete)
+        try:
+            while True:
+                chunk = url.read(chunk_size)
+                if not chunk:
+                    break
+                buf.write(chunk)
+                perc_complete += 1
+                if perc_complete > 100:
+                    perc_complete = 100
+                self.callback(track, 1, perc_complete)
+            mp3 = buf.getvalue()
+        except:
+            logger.error('Reading from opened url %s' % track)
+            self.callback(track, 3)
+            return 
+        buf.close()
+        
+        # This will cause failures if amz_file has the wrong size listed
+        ''' 
+        if len(mp3) != fs:
+            logger.error('Expected file size != downloaded size %s' 
+                            % track)
+            self.callback(track, 3)
+            continue
+        '''
+        
+        # Write track to File
+        try:
+            fname = os.path.join(self.dir_name, track.title + '.mp3')
+            save_file = open(fname, 'wb')
+            save_file.write(mp3)
+            save_file.close()    
+            self.callback(track, 2)
+        except:                
+            logger.error('Writing to file %s' % track)
+            self.callback(track, 3)
+            return    
+      
         
 class Downloader(threading.Thread):
     '''
@@ -141,87 +212,40 @@ class Downloader(threading.Thread):
     4 - Downloading Finished
     '''
     
-    def __init__(self, dir_name, track_list, callback):
+    def __init__(self, dir_name, track_list, callback, num_threads=1):
         super(Downloader, self).__init__()
         for track in track_list:
             if type(track) != Track:
                 raise ValueError('track must be of type Track')
-        self.track_list = track_list
-        self.dir_name = dir_name
-        self.redirects = urllib2.HTTPRedirectHandler()
-        self.cookies =  urllib2.HTTPCookieProcessor()
-        self.opener = urllib2.build_opener(self.redirects, self.cookies)
+        self.queue = deque(track_list)
+        self.dir_name = dir_name        
         self.callback = callback
+        self.num_threads = num_threads
         self.abort = False
         
     def kill(self):
+        if self.workers:
+            for worker in self.workers:
+                worker.kill()
         self.abort = True
-        
+    
+    def feed_work(self):
+        try:
+            track = self.queue.popleft()
+            return track
+        except IndexError:
+            return None
+    
     def run(self):
-        for track in self.track_list:
-            if self.abort:
-                break
+        n = self.num_threads
+        self.workers = [_DownloadWorker(self.feed_work, self.callback, \
+                                        self.dir_name) for i in range(n)]
+        for worker in self.workers:
+            worker.start()
+        for worker in self.workers:
+            worker.join()
             
-            # Create the URL Request
-            request = urllib2.Request(track.url)
-            
-            self.callback(track, 0)
-            try:
-                url = self.opener.open(request)
-            except urllib2.URLError:
-                logger.error('Opening request %s' % track)
-                self.callback(track, 3)
-                continue
-            
-            # Download the track
-            fs = int(track.filesize)
-            perc_complete = 0
-            chunk_size = fs / 100
-            buf = cStringIO.StringIO()
-            self.callback(track, 1, perc_complete)
-            try:
-                while True:
-                    chunk = url.read(chunk_size)
-                    if not chunk:
-                        break
-                    buf.write(chunk)
-                    perc_complete += 1
-                    if perc_complete > 100:
-                        perc_complete = 100
-                    self.callback(track, 1, perc_complete)
-                mp3 = buf.getvalue()
-            except:
-                logger.error('Reading from opened url %s' % track)
-                self.callback(track, 3)
-                continue 
-            buf.close()
-            
-            if len(mp3) != fs:
-                logger.error('Expected file size != downloaded size %s' 
-                             % track)
-                self.callback(track, 3)
-                continue
-            
-            # Write track to File
-            try:
-                fname = os.path.join(self.dir_name, track.title + '.mp3')
-                save_file = open(fname, 'wb')
-                save_file.write(mp3)
-                save_file.close()    
-                self.callback(track, 2)
-            except:                
-                logger.error('Writing to file %s' % track)
-                self.callback(track, 3)
-                continue
-        
         if not self.abort:
-            self.callback(None, 4)   
-            
+            self.callback(None, 4)  
 
-def parse_tracks(filename):
-    f = open(filename, 'r')
-    dc = Decryptor(f)
-    f.close()
-    prsr = AmzParser(dc.decrypt())
-    parsed_tracks = prsr.parse()
-    return parsed_tracks
+

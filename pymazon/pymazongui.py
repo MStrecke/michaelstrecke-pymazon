@@ -116,15 +116,15 @@ class TrackTableModel(QAbstractTableModel):
             return
         for track in self.t_data:
             url = track.image
-            if url not in self.unique_urls:
-                self.unique_urls.add(url)       
-                try:
-                    uurl = urllib2.urlopen(url)
-                    img_data = uurl.read()
-                    uurl.close()
-                except (urllib2.URLError, ValueError):
-                    img_data = ''                
-                self.img_map[url] = img_data
+            self.unique_urls.add(url)
+        for url in self.unique_urls:
+            try:
+                uurl = urllib2.urlopen(url)
+                img_data = uurl.read()
+                uurl.close()
+            except (urllib2.URLError, ValueError):
+                img_data = ''                
+            self.img_map[url] = img_data            
                 
     def rowCount(self, parent):
         return len(self.t_data)
@@ -251,7 +251,8 @@ class MainWidget(QWidget):
             d.exec_()
             return
             
-        self.downloader = Downloader(save_dir, tracks, self.downloader_callback)
+        self.downloader = Downloader(save_dir, tracks, self.downloader_callback,
+                                     num_threads=5)
         self.downloader.start()
         self.dl_button.setEnabled(False)
         
