@@ -179,7 +179,7 @@ class TrackTable(QTableView):
             midx = self.model.createIndex(i, idx)
             aa = self.model.get_album_art(i)
             self.setIndexWidget(midx, aa)            
-         
+                        
     def refresh(self):
         self.show_album_art()
         self.set_sizing()
