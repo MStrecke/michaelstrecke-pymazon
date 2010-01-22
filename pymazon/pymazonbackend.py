@@ -16,9 +16,11 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import os, sys, base64, re, urllib2, threading, logging, datetime, cStringIO
+import os, sys, base64, re, urllib2, threading, logging, datetime, cStringIO, \
+       string
 from xml.etree import cElementTree
 from collections import deque
+
 
 try:
     from Crypto.Cipher import DES
@@ -34,9 +36,22 @@ IV = '\x5E\x72\xD7\x9A\x11\xB3\x4F\xEE'
 
 logger = logging.getLogger('pymazon.pymazonbackend')
 
+# the default format string for file save name
+SAVE_TEMPL = string.Template('${tracknum} - ${title}')
+
 #-------------------------------------------------------------------------------
 # The work horse backend
 #-------------------------------------------------------------------------------
+def set_save_templ(templ_string):
+    # make sure at least the title will be present, else default to safe.
+    if '${title}' not in templ_string:
+        return
+    if type(templ_string) != str:
+        return
+    global SAVE_TEMPL
+    SAVE_TEMPL = string.Template(templ_string)
+    
+    
 class ParseException(Exception):
     pass
 
@@ -108,6 +123,12 @@ class Track(object):
         
     def __str__(self):
         return str(self.__dict__)
+        
+    def get_save_name(self):
+        sn = SAVE_TEMPL.safe_substitute(artist=self.artist, title=self.title,
+                                        tracknum=self.tracknum, 
+                                        album=self.album)
+        return sn
         
         
 class Decryptor(object):
@@ -190,7 +211,7 @@ class _DownloadWorker(threading.Thread):
         
         # Write track to File
         try:
-            fname = os.path.join(self.dir_name, track.title + '.mp3')
+            fname = os.path.join(self.dir_name, track.get_save_name() + '.mp3')
             save_file = open(fname, 'wb')
             save_file.write(mp3)
             save_file.close()    

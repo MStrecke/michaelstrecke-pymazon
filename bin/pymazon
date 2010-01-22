@@ -53,8 +53,37 @@ def main():
     parser.add_option('-g', '--gui', dest='gui', 
                       help='Launch the program in GUI mode',
                       action='store_true', default=False)
+    parser.add_option('-s', '--save-name-format', dest='fmt',
+                      help=\
+'''A format string to tell Pymazon how to format the file names. The default
+format is '${tracknum} - ${title}' which will generate a file of the name 
+'1 - foosong.mp3' for example. Valid tags are '${tracknum}' '${title}'
+'${artist}' '${album}' and can appear in any order. The '${title} tag must be 
+present at a minimum, if not, Pymazon reverts to the default setting.
+
+The command should be surrounded in quotes:
+$ pymazon -g --save-name-format='${tracknum} - ${artist} - ${title}'
+''',
+                      default='')  
                       
     (options, args) = parser.parse_args()
+    
+    # setup the save name formatting if not default
+    from pymazon.pymazonbackend import set_save_templ    
+    config_file = os.path.join(os.path.expanduser('~'), '.pymazon', '.pymazon')
+    if options.fmt:        
+        set_save_templ(options.fmt)
+    elif os.path.exists(config_file):
+        from ConfigParser import ConfigParser
+        cp = ConfigParser()
+        cp.read(config_file)
+        try:
+            fmt = cp.get('config', 'save_name_format')
+            set_save_templ(fmt)
+        except:
+            pass
+    else:
+        pass
     
     if options.gui:
         try:
