@@ -50,7 +50,32 @@ def set_save_templ(templ_string):
         return
     global SAVE_TEMPL
     SAVE_TEMPL = string.Template(templ_string)
-    
+
+
+class ImageCache:
+    def __init__(self):
+        self.cache = {}        
+        
+    def _download(self, url):
+        # Download the image data:
+        handle = urllib2.urlopen(url)
+        data = handle.read()
+        handle.close()        
+        return data
+        
+    def get(self, url):
+        if url in self.cache:
+            return self.cache[url]
+        else:
+            # Try to nab the url. If we don't succeed, oh well:
+            try:    
+                pixbuf = self._download(url)
+            except: 
+                pixbuf = ''        
+            # Write whatever we got to the cache, and return it:
+            self.cache[url] = pixbuf
+            return pixbuf
+            
     
 class ParseException(Exception):
     pass

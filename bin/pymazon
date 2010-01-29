@@ -88,8 +88,8 @@ $ pymazon -g --save-name-format='${tracknum} - ${artist} - ${title}'
     if options.gui:
         
         frontend = ""
-        try:
-            from pymazon.pymazongui import MainWindow
+        try:            
+            from pymazon.pymazonqt import MainWindow
             from PyQt4.QtGui import QApplication
             frontend = "qt"
         
