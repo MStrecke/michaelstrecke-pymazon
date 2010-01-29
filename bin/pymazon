@@ -86,22 +86,37 @@ $ pymazon -g --save-name-format='${tracknum} - ${artist} - ${title}'
         pass
     
     if options.gui:
+        
+        frontend = ""
         try:
             from pymazon.pymazongui import MainWindow
             from PyQt4.QtGui import QApplication
+            frontend = "qt"
+        
         except ImportError:
-            msg = 'Unable to import PyQt4, which is required to run Pymazon in '
-            msg += 'GUI mode. It can still be used from the command line. '
-            msg += 'Simply start Pymazon without the -g switch.'
-            raise ImportError(msg)
-        if args:
-            amz_file = validate_sysargs(args)
-        else:
-            amz_file = None
-        app = QApplication([])
-        win = MainWindow(amz_file)
-        win.show()
-        app.exec_()
+            try:
+                from pymazon.pymazongtk import MainWindow
+                import gtk
+                frontend = "gtk"
+            
+            except:
+                msg  = 'Unable to import PyQt4 or pyGTK, one of which is '
+                msg += 'required to run Pymazon in GUI mode. It can still be '
+                msg += 'used from the command line. Simply start Pymazon '
+                msg += 'without the -g switch.'
+                raise ImportError(msg)
+        
+        amz_file = validate_sysargs(args) if args else None
+        
+        if frontend == "qt":
+            app = QApplication([])
+            win = MainWindow(amz_file)
+            win.show()
+            app.exec_()
+        
+        elif frontend == "gtk":
+            app = MainWindow(amz_file)
+            app.start()
         
     else:
         from pymazon.pymazonbackend import parse_tracks, Downloader

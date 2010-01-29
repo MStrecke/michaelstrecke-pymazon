@@ -7,3 +7,5 @@ setup.py
 pymazon/__init__.py
 pymazon/pymazonbackend.py
 pymazon/pymazongui.py
+pymazon/pymazongtk.py
+pymazon/pymazon.gtk

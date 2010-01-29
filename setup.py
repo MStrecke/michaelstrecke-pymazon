@@ -46,6 +46,7 @@ setup(name='Pymazon',
       author_email='sccolbert@gmail.com',
       url='http://code.google.com/p/pymazon/',
       packages=['pymazon'],
+      package_data={'pymazon':['pymazon.gtk']},
       scripts=['./bin/pymazon'],
       license='GPLv3',
       long_description=\
