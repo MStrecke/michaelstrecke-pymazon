@@ -21,7 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import os, sys, operator, urllib2
 
 import gtk, gobject
-from pymazon.pymazonbackend import parse_tracks, Downloader, ImageCache
+from pymazon.pymazonbackend import parse_tracks, Downloader, ImageCache, set_save_templ
 
 
 class AlbumArt(object):
@@ -76,13 +76,18 @@ class MainWindow:
         self.b = gtk.Builder()
         self.b.add_from_file(MainWindow.BUILDER_FILE_PATH)
         
-        self.window      = self.b.get_object("Window")
-        self.button      = self.b.get_object("Download")
-        self.model       = self.b.get_object("InfoModel")
-        self.filechooser = self.b.get_object("FileChooser")
-        self.dirchooser  = self.b.get_object("DirectoryChooser")
-        self.colstatus   = self.b.get_object("ColStatus")
+        self.window       = self.b.get_object("Window")
+        self.button       = self.b.get_object("Download")
+        self.model        = self.b.get_object("InfoModel")
+        self.formatmodel  = self.b.get_object("FormatsModel")
+        self.filechooser  = self.b.get_object("FileChooser")
+        self.dirchooser   = self.b.get_object("DirectoryChooser")
+        self.colstatus    = self.b.get_object("ColStatus")
+        self.formatlist   = self.b.get_object("FormatStrings")
+        self.formatdialog = self.b.get_object("FormatDialog")
+        self.formatentry  = self.b.get_object("FormatEntry")
         self.model_map = {}
+        self.oldformat = 0
 
         self.set_filter()
         
@@ -96,6 +101,8 @@ class MainWindow:
         self.window.connect("delete-event", gtk.main_quit)
         self.filechooser.connect("file-set", self.load_file)
         self.button.connect("clicked", self.start_download)
+        self.formatlist.connect("changed", self.new_format)
+        self.formatentry.connect("icon-release", self.reset_string)
         
         self.button.set_sensitive(False) # No file yet.
         self.parsed = None
@@ -107,6 +114,43 @@ class MainWindow:
         #    self.filechooser.select_filename(amz_file)
         #    self.load_file(self.filechooser)    
     
+    def reset_string(self, *ignored_options):
+    	self.formatentry.set_text("${tracknum} - ${title}")
+    
+    def new_format(self, combobox):
+    	selected = self.formatlist.get_active()
+    	if selected == 5:
+    		self.other_option()
+    	else:
+    		self.oldformat = selected
+    		set_save_templ(self.formatmodel[selected][1])
+    
+    def other_option(self):
+        code = self.formatdialog.run()
+        self.formatdialog.hide()
+        
+        # If 'code' is 1, then 'ok' was clicked. otherwise, we cancel:
+        if code == 1:
+            text = self.formatentry.get_text()
+            
+            if r"${title}" not in text:
+                win = gtk.MessageDialog(parent=self.window, type=gtk.MESSAGE_ERROR,
+                    buttons=gtk.BUTTONS_OK,
+                    message_format="Format strings need to have ${title} in them.")
+                win.run()
+                win.hide()
+                # Try again:
+                self.other_option()
+                return
+            
+            # Set the new format string:
+            self.oldformat = 5
+            set_save_templ(text)
+            return
+        
+        # Else, the old option needs to be reinstated:
+        self.formatlist.set_active(self.oldformat)
+        
     def set_filter(self):
         self.filefilter = gtk.FileFilter()
         self.filefilter.add_pattern("*.amz")

@@ -22,6 +22,40 @@
       <column type="gchararray"/>
     </columns>
   </object>
+  <object class="GtkListStore" id="FormatsModel">
+    <columns>
+      <!-- column-name FormatsTitle -->
+      <column type="gchararray"/>
+      <!-- column-name FormatsCode -->
+      <column type="gchararray"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0" translatable="yes">&lt;b&gt;${tracknum}&lt;/b&gt; - &lt;b&gt;${title}&lt;/b&gt;</col>
+        <col id="1" translatable="yes">${tracknum} - ${title}</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">&lt;b&gt;${title}&lt;/b&gt;</col>
+        <col id="1" translatable="yes">${title}</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">&lt;b&gt;${tracknum}&lt;/b&gt; - &lt;b&gt;${artist}&lt;/b&gt; - &lt;b&gt;${title}&lt;/b&gt;</col>
+        <col id="1" translatable="yes">${tracknum} - ${artist} - ${title}</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">&lt;b&gt;${tracknum}&lt;/b&gt;. &lt;b&gt;${artist}&lt;/b&gt; - &lt;b&gt;${title}&lt;/b&gt;</col>
+        <col id="1" translatable="yes">${tracknum}. ${artist} - ${title}</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">&lt;b&gt;${artist}&lt;/b&gt; - &lt;b&gt;${title}&lt;/b&gt;</col>
+        <col id="1" translatable="yes">${artist} - ${title}</col>
+      </row>
+      <row>
+        <col id="0" translatable="yes">Custom...</col>
+        <col id="1" translatable="yes"></col>
+      </row>
+    </data>
+  </object>
   <object class="GtkWindow" id="Window">
     <property name="border_width">5</property>
     <property name="title" translatable="yes">Pymazon</property>
@@ -227,7 +261,169 @@
             <property name="position">1</property>
           </packing>
         </child>
+        <child>
+          <object class="GtkHBox" id="hbox1">
+            <property name="visible">True</property>
+            <property name="spacing">5</property>
+            <child>
+              <object class="GtkLabel" id="label4">
+                <property name="visible">True</property>
+                <property name="xalign">1</property>
+                <property name="label" translatable="yes">Filename Format</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkComboBox" id="FormatStrings">
+                <property name="visible">True</property>
+                <property name="model">FormatsModel</property>
+                <property name="active">0</property>
+                <property name="button_sensitivity">on</property>
+                <child>
+                  <object class="GtkCellRendererText" id="cellrenderertext1"/>
+                  <attributes>
+                    <attribute name="markup">0</attribute>
+                  </attributes>
+                </child>
+              </object>
+              <packing>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="position">2</property>
+          </packing>
+        </child>
       </object>
     </child>
+  </object>
+  <object class="GtkDialog" id="FormatDialog">
+    <property name="border_width">5</property>
+    <property name="title" translatable="yes">Custom Format String...</property>
+    <property name="modal">True</property>
+    <property name="type_hint">normal</property>
+    <property name="has_separator">False</property>
+    <child internal-child="vbox">
+      <object class="GtkVBox" id="dialog-vbox1">
+        <property name="visible">True</property>
+        <property name="orientation">vertical</property>
+        <property name="spacing">2</property>
+        <child>
+          <object class="GtkVBox" id="vbox3">
+            <property name="visible">True</property>
+            <property name="orientation">vertical</property>
+            <property name="spacing">5</property>
+            <child>
+              <object class="GtkHBox" id="hbox2">
+                <property name="visible">True</property>
+                <property name="spacing">5</property>
+                <child>
+                  <object class="GtkLabel" id="label5">
+                    <property name="visible">True</property>
+                    <property name="xalign">1</property>
+                    <property name="label" translatable="yes">String</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkEntry" id="FormatEntry">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="invisible_char">&#x25CF;</property>
+                    <property name="text" translatable="yes">${tracknum} - ${title}</property>
+                    <property name="secondary_icon_stock">gtk-revert-to-saved</property>
+                    <property name="secondary_icon_activatable">True</property>
+                    <property name="secondary_icon_sensitive">True</property>
+                  </object>
+                  <packing>
+                    <property name="position">1</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkHSeparator" id="hseparator1">
+                <property name="visible">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="label6">
+                <property name="visible">True</property>
+                <property name="label" translatable="yes">Valid Formatting Tags: &lt;i&gt;${tracknum}&lt;/i&gt;, &lt;i&gt;${artist}&lt;/i&gt;, &lt;i&gt;${album}&lt;/i&gt;, &lt;i&gt;${title}&lt;/i&gt;
+
+Note: Do not include the '.mp3' at the end. That gets added automatically.</property>
+                <property name="use_markup">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="position">2</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="position">2</property>
+          </packing>
+        </child>
+        <child internal-child="action_area">
+          <object class="GtkHButtonBox" id="dialog-action_area1">
+            <property name="visible">True</property>
+            <property name="layout_style">end</property>
+            <child>
+              <object class="GtkButton" id="ButtonCancel">
+                <property name="label">gtk-cancel</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="use_stock">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="ButtonOk">
+                <property name="label">gtk-ok</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="use_stock">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="pack_type">end</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+    <action-widgets>
+      <action-widget response="0">ButtonCancel</action-widget>
+      <action-widget response="1">ButtonOk</action-widget>
+    </action-widgets>
   </object>
 </interface>
