@@ -70,7 +70,7 @@ $ pymazon -g --save-name-format='${tracknum} - ${artist} - ${title}'
     
     # setup the save name formatting if not default
     from pymazon.pymazonbackend import set_save_templ    
-    config_file = os.path.join(os.path.expanduser('~'), '.pymazon', '.pymazon')
+    config_file = os.path.join(os.path.expanduser('~'), '.pymazon', 'pymazonrc')
     if options.fmt:        
         set_save_templ(options.fmt)
     elif os.path.exists(config_file):
@@ -85,20 +85,17 @@ $ pymazon -g --save-name-format='${tracknum} - ${artist} - ${title}'
     else:
         pass
     
-    if options.gui:
-        
+    if options.gui:        
         frontend = ""
-        try:            
+        try:   
             from pymazon.pymazonqt import MainWindow
             from PyQt4.QtGui import QApplication
-            frontend = "qt"
-        
+            frontend = "qt"        
         except ImportError:
             try:
                 from pymazon.pymazongtk import MainWindow
                 import gtk
-                frontend = "gtk"
-            
+                frontend = "gtk"            
             except:
                 msg  = 'Unable to import PyQt4 or pyGTK, one of which is '
                 msg += 'required to run Pymazon in GUI mode. It can still be '
@@ -112,11 +109,12 @@ $ pymazon -g --save-name-format='${tracknum} - ${artist} - ${title}'
             app = QApplication([])
             win = MainWindow(amz_file)
             win.show()
-            app.exec_()
-        
+            app.exec_()        
         elif frontend == "gtk":
             app = MainWindow(amz_file)
             app.start()
+        else:
+            pass
         
     else:
         from pymazon.pymazonbackend import parse_tracks, Downloader
@@ -125,8 +123,7 @@ $ pymazon -g --save-name-format='${tracknum} - ${artist} - ${title}'
         if not os.access(save_dir, os.W_OK):
             msg = 'Unable to write to target directory. '
             msg += 'Ensure the directory exits and write permission is granted.'
-            raise RuntimeError(msg)
-            sys.exit()
+            raise RuntimeError(msg)            
             
         def dl_printer(track, status, *args):
             if status == 0:

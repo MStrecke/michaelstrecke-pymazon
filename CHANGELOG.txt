@@ -1,5 +1,15 @@
 Pymazon Changelog
 
+0.1.1
+-----
+- Added the option to specify the save name format via command line option and configuration file
+- Added a threaded downloader which runs 5 simultaneous threads when in gui mode
+- Added a PyGtk Gui (Submitted by Raymond Myers)
+- Rewrote the QT Gui with Qt Designer and pyuic4 - this simplified and cleaned up a bunch of stuff
+- Added graphical progress bars to the Gui's
+- Removed a check that asserted the downloaded file size was the same as specified in the amz file
+  as Amazon was misreporting file size and it was causing Pymazon to erroneously fail 
+
 0.1.0
 -----
 - Fixed empty log file deletion exception on Windows

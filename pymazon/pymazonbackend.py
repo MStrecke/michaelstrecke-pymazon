@@ -189,8 +189,8 @@ class _DownloadWorker(threading.Thread):
             if not track:
                 break
             self.work(track)        
-        
-    def work(self, track):
+    
+    def _download(self, track):
         # Create the URL Request
         request = urllib2.Request(track.url)
             
@@ -200,7 +200,7 @@ class _DownloadWorker(threading.Thread):
         except urllib2.URLError:
             logger.error('Opening request %s' % track)
             self.callback(track, 3)
-            return
+            return None
         
         # Download the track
         fs = int(track.filesize)
@@ -217,34 +217,40 @@ class _DownloadWorker(threading.Thread):
                 perc_complete += 1
                 if perc_complete > 100:
                     perc_complete = 100
-                self.callback(track, 1, perc_complete)
-            mp3 = buf.getvalue()
+                self.callback(track, 1, perc_complete)            
         except:
             logger.error('Reading from opened url %s' % track)
             self.callback(track, 3)
-            return 
+            buf.close()
+            return None
+        
+        mp3 = buf.getvalue()
         buf.close()
-        
-        # This will cause failures if amz_file has the wrong size listed
-        ''' 
-        if len(mp3) != fs:
-            logger.error('Expected file size != downloaded size %s' 
-                            % track)
-            self.callback(track, 3)
-            continue
-        '''
-        
+        return mp3
+    
+    def _save_mp3(self, track, data):
         # Write track to File
         try:
-            fname = os.path.join(self.dir_name, track.get_save_name() + '.mp3')
+            fname = os.path.join(self.dir_name, track.get_save_name() + '.mp3')            
+            dir_name = os.path.dirname(fname)
+            if not os.path.exists(dir_name):
+                try:
+                    os.makedirs(dir_name)
+                except: # if this excepts, it's because of permission, and we'll catch it in the outer clause
+                    pass
             save_file = open(fname, 'wb')
-            save_file.write(mp3)
+            save_file.write(data)
             save_file.close()    
             self.callback(track, 2)
-        except:                
+        except:            
             logger.error('Writing to file %s' % track)
-            self.callback(track, 3)
-            return    
+            self.callback(track, 3)            
+        
+    def work(self, track):        
+        mp3_data = self._download(track)
+        if not mp3_data:
+            return            
+        self._save_mp3(track, mp3_data)           
       
         
 class Downloader(threading.Thread):
