@@ -200,7 +200,8 @@ class MainWindow:
         self.button.set_sensitive(b)
         self.filechooser.set_sensitive(b)
         self.dirchooser.set_sensitive(b)    
-    
+        self.formatlist.set_sensitive(b)
+        
     def start_download(self, button):
         save_dir = self.dirchooser.get_filename()
         self.downloader = Downloader(save_dir, self.parsed, self.downloader_callback, num_threads=5)
