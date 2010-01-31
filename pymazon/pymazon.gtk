@@ -22,40 +22,6 @@
       <column type="gchararray"/>
     </columns>
   </object>
-  <object class="GtkListStore" id="FormatsModel">
-    <columns>
-      <!-- column-name FormatsTitle -->
-      <column type="gchararray"/>
-      <!-- column-name FormatsCode -->
-      <column type="gchararray"/>
-    </columns>
-    <data>
-      <row>
-        <col id="0" translatable="yes">&lt;b&gt;${tracknum}&lt;/b&gt; - &lt;b&gt;${title}&lt;/b&gt;</col>
-        <col id="1" translatable="yes">${tracknum} - ${title}</col>
-      </row>
-      <row>
-        <col id="0" translatable="yes">&lt;b&gt;${title}&lt;/b&gt;</col>
-        <col id="1" translatable="yes">${title}</col>
-      </row>
-      <row>
-        <col id="0" translatable="yes">&lt;b&gt;${tracknum}&lt;/b&gt; - &lt;b&gt;${artist}&lt;/b&gt; - &lt;b&gt;${title}&lt;/b&gt;</col>
-        <col id="1" translatable="yes">${tracknum} - ${artist} - ${title}</col>
-      </row>
-      <row>
-        <col id="0" translatable="yes">&lt;b&gt;${tracknum}&lt;/b&gt;. &lt;b&gt;${artist}&lt;/b&gt; - &lt;b&gt;${title}&lt;/b&gt;</col>
-        <col id="1" translatable="yes">${tracknum}. ${artist} - ${title}</col>
-      </row>
-      <row>
-        <col id="0" translatable="yes">&lt;b&gt;${artist}&lt;/b&gt; - &lt;b&gt;${title}&lt;/b&gt;</col>
-        <col id="1" translatable="yes">${artist} - ${title}</col>
-      </row>
-      <row>
-        <col id="0" translatable="yes">Custom...</col>
-        <col id="1" translatable="yes"></col>
-      </row>
-    </data>
-  </object>
   <object class="GtkWindow" id="Window">
     <property name="border_width">5</property>
     <property name="title" translatable="yes">Pymazon</property>
@@ -279,7 +245,6 @@
             <child>
               <object class="GtkComboBox" id="FormatStrings">
                 <property name="visible">True</property>
-                <property name="model">FormatsModel</property>
                 <property name="active">0</property>
                 <property name="button_sensitivity">on</property>
                 <child>

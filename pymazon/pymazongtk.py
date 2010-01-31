@@ -21,7 +21,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import os, sys, operator, urllib2
 
 import gtk, gobject
-from pymazon.pymazonbackend import parse_tracks, Downloader, ImageCache, set_save_templ
+from pymazon.pymazonbackend import parse_tracks, Downloader, ImageCache, \
+                                   set_save_templ, get_save_templ
 
 
 class AlbumArt(object):
@@ -78,8 +79,7 @@ class MainWindow:
         
         self.window       = self.b.get_object("Window")
         self.button       = self.b.get_object("Download")
-        self.model        = self.b.get_object("InfoModel")
-        self.formatmodel  = self.b.get_object("FormatsModel")
+        self.model        = self.b.get_object("InfoModel")        
         self.filechooser  = self.b.get_object("FileChooser")
         self.dirchooser   = self.b.get_object("DirectoryChooser")
         self.colstatus    = self.b.get_object("ColStatus")
@@ -108,6 +108,20 @@ class MainWindow:
         self.parsed = None
         self.art  = AlbumArt()
         
+        # setup the format store
+        self.fmt_strings = [get_save_templ(),
+                            '${title}',
+                            '${tracknum} - ${artist} - ${title}',
+                            '${artist} - ${title}',
+                            'Custom...']
+        # add back the default if the user config overrode it
+        if '${tracknum} - ${title}' not in self.fmt_strings:
+            self.fmt_strings.insert(1, '${tracknum} - ${title}')
+        self.fmt_store = gtk.ListStore(gobject.TYPE_STRING)
+        for fmt in self.fmt_strings:
+            self.fmt_store.append([fmt])
+        self.formatlist.set_model(self.fmt_store)        
+        
         # If we were given it, set the filename:
         # (doesn't work for some reason...
         #if amz_file:
@@ -119,11 +133,11 @@ class MainWindow:
     
     def new_format(self, combobox):
     	selected = self.formatlist.get_active()
-    	if selected == 5:
+    	if self.fmt_store[selected][0] == 'Custom...':
     		self.other_option()
     	else:
     		self.oldformat = selected
-    		set_save_templ(self.formatmodel[selected][1])
+    		set_save_templ(self.fmt_store[selected][0])
     
     def other_option(self):
         code = self.formatdialog.run()
@@ -144,8 +158,11 @@ class MainWindow:
                 return
             
             # Set the new format string:
-            self.oldformat = 5
             set_save_templ(text)
+            if text not in self.fmt_strings:
+                self.fmt_store.append([text])
+                self.fmt_strings.append(text)
+            self.formatlist.set_active(self.fmt_strings.index(text))
             return
         
         # Else, the old option needs to be reinstated:

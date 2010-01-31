@@ -61,8 +61,12 @@ format is '${tracknum} - ${title}' which will generate a file of the name
 '${artist}' '${album}' and can appear in any order. The '${title} tag must be 
 present at a minimum, if not, Pymazon reverts to the default setting.
 
-The command should be surrounded in quotes:
+The command should be surrounded in single quotes:
 $ pymazon -g --save-name-format='${tracknum} - ${artist} - ${title}'
+
+or 
+
+$ pymazon -g -s '${tracknum} - ${artist} - ${title}'
 ''',
                       default='')  
                       
@@ -70,8 +74,8 @@ $ pymazon -g --save-name-format='${tracknum} - ${artist} - ${title}'
     
     # setup the save name formatting if not default
     from pymazon.pymazonbackend import set_save_templ    
-    config_file = os.path.join(os.path.expanduser('~'), '.pymazon', 'pymazonrc')
-    if options.fmt:        
+    config_file = os.path.join(os.path.expanduser('~'), '.pymazon', 'pymazonrc')    
+    if options.fmt:       
         set_save_templ(options.fmt)
     elif os.path.exists(config_file):
         from ConfigParser import ConfigParser
@@ -87,7 +91,8 @@ $ pymazon -g --save-name-format='${tracknum} - ${artist} - ${title}'
     
     if options.gui:        
         frontend = ""
-        try:   
+        try: 
+            raise ImportError
             from pymazon.pymazonqt import MainWindow
             from PyQt4.QtGui import QApplication
             frontend = "qt"        
@@ -103,7 +108,7 @@ $ pymazon -g --save-name-format='${tracknum} - ${artist} - ${title}'
                 msg += 'without the -g switch.'
                 raise ImportError(msg)
         
-        amz_file = validate_sysargs(args) if args else None
+        amz_file = validate_sysargs(args) if args else None        
         
         if frontend == "qt":
             app = QApplication([])

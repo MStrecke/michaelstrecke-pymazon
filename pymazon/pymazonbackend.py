@@ -51,6 +51,9 @@ def set_save_templ(templ_string):
     global SAVE_TEMPL
     SAVE_TEMPL = string.Template(templ_string)
 
+def get_save_templ():
+    return SAVE_TEMPL.template
+
 
 class ImageCache:
     def __init__(self):
