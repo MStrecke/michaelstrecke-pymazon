@@ -19,7 +19,9 @@ import os
 from PyQt4.QtGui import *
 from PyQt4.QtCore import Qt, QAbstractTableModel, pyqtSignal, QSize
 from _pymazon_qt import Ui_MainWindow
-from pymazon.pymazonbackend import parse_tracks, Downloader, ImageCache
+import qt_fmt_dialog
+from pymazon.pymazonbackend import parse_tracks, Downloader, ImageCache, \
+                                   get_save_templ, set_save_templ
 
 
 class AlbumArt(QLabel):
@@ -33,6 +35,10 @@ class AlbumArt(QLabel):
         pm = QPixmap()
         pm.loadFromData(img_data, None, Qt.AutoColor)
         return pm
+        
+        
+class FormatDialog(QDialog, qt_fmt_dialog.Ui_Dialog):
+    pass        
         
         
 class ProgressBar(QProgressBar):
@@ -117,8 +123,37 @@ class MainWindow(QMainWindow, Ui_MainWindow):
         self.dl_button.clicked.connect(self.download_tracks)
         self.dlProgress.connect(self.update_progress_bar)
         
-        self.load_new_amz_file(amz_file)        
+        self.setup_fmt_box()
+        self.load_new_amz_file(amz_file)       
     
+    def setup_fmt_box(self):
+        # setup the format box
+        self.custom_fmt = 'Custom...'
+        fmt_strings = [get_save_templ(),
+                            '${title}',
+                            '${tracknum} - ${artist} - ${title}',
+                            '${artist} - ${title}',
+                            self.custom_fmt]
+        # add back the default if the user config overrode it
+        if '${tracknum} - ${title}' not in fmt_strings:
+            fmt_strings.insert(1, '${tracknum} - ${title}')
+        self.fmt_box.addItems(fmt_strings)
+        self.fmt_box.currentIndexChanged.connect(self._new_fmt)
+     
+    def _new_fmt(self, idx):
+        fmt = str(self.fmt_box.currentText())
+        if fmt == self.custom_fmt:
+            fmt = self._new_custom_fmt()
+            self.fmt_box.addItem(fmt)
+            idx = self.fmt_box.findText(fmt)
+            self.fmt_box.setCurrentIndex(idx)
+        set_save_templ(fmt)
+            
+    def _new_custom_fmt(self):
+        dialog = FormatDialog()
+        dialog.setupUi(dialog)
+        dialog.exec_()
+         
     def set_table_sizing(self):
         self.tableView.resizeColumnsToContents()
         self.tableView.resizeRowsToContents()

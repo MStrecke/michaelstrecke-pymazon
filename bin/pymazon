@@ -33,7 +33,7 @@ logging.basicConfig(filename=LOG_FILENAME, format=fmt)
 
 def validate_sysargs(args):
     if len(args)!=1:
-        raise ValueError('A single positional argument must be supplied.')
+        print 'An amz file must be supplied as an argument when not using the gui mode.'
         sys.exit()            
     amz_file = args[0]
     if not os.path.isfile(amz_file):
@@ -92,7 +92,7 @@ $ pymazon -g -s '${tracknum} - ${artist} - ${title}'
     if options.gui:        
         frontend = ""
         try: 
-            raise ImportError
+            #raise ImportError
             from pymazon.pymazonqt import MainWindow
             from PyQt4.QtGui import QApplication
             frontend = "qt"        

@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'pymazon_qt.ui'
 #
-# Created: Fri Jan 29 13:59:52 2010
+# Created: Sun Jan 31 18:31:12 2010
 #      by: PyQt4 UI code generator 4.6
 #
 # WARNING! All changes made in this file will be lost!
@@ -47,9 +47,16 @@ class Ui_MainWindow(object):
         self.tableView = QtGui.QTableView(self.centralwidget)
         self.tableView.setObjectName("tableView")
         self.gridLayout_2.addWidget(self.tableView, 2, 0, 1, 3)
+        self.fmt_box = QtGui.QComboBox(self.centralwidget)
+        self.fmt_box.setObjectName("fmt_box")
+        self.gridLayout_2.addWidget(self.fmt_box, 3, 1, 1, 2)
+        self.filename_label = QtGui.QLabel(self.centralwidget)
+        self.filename_label.setObjectName("filename_label")
+        self.gridLayout_2.addWidget(self.filename_label, 3, 0, 1, 1)
         MainWindow.setCentralWidget(self.centralwidget)
 
         self.retranslateUi(MainWindow)
+        self.fmt_box.setCurrentIndex(-1)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
@@ -57,4 +64,5 @@ class Ui_MainWindow(object):
         self.amz_button.setText(QtGui.QApplication.translate("MainWindow", "Load AMZ File", None, QtGui.QApplication.UnicodeUTF8))
         self.dir_button.setText(QtGui.QApplication.translate("MainWindow", "Save Directory", None, QtGui.QApplication.UnicodeUTF8))
         self.dl_button.setText(QtGui.QApplication.translate("MainWindow", "Download", None, QtGui.QApplication.UnicodeUTF8))
+        self.filename_label.setText(QtGui.QApplication.translate("MainWindow", "Filename Format", None, QtGui.QApplication.UnicodeUTF8))
 

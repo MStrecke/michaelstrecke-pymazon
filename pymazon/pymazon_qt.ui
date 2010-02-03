@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>664</width>
-    <height>482</height>
+    <height>481</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -64,6 +64,20 @@
     </item>
     <item row="2" column="0" colspan="3">
      <widget class="QTableView" name="tableView"/>
+    </item>
+    <item row="3" column="1" colspan="2">
+     <widget class="QComboBox" name="fmt_box">
+      <property name="currentIndex">
+       <number>-1</number>
+      </property>
+     </widget>
+    </item>
+    <item row="3" column="0">
+     <widget class="QLabel" name="filename_label">
+      <property name="text">
+       <string>Filename Format</string>
+      </property>
+     </widget>
     </item>
    </layout>
   </widget>
