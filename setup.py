@@ -40,7 +40,7 @@ class InstallScripts(install_scripts):
 
 
 setup(name='Pymazon',
-      version='0.1.0',
+      version='0.1.1',
       description='Python Based Downloader for the Amazon mp3 Store',
       author='S. Chris Colbert',
       author_email='sccolbert@gmail.com',
