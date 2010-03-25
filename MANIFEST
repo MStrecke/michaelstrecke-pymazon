@@ -6,8 +6,8 @@ setup.py
 ./bin/pymazon
 pymazon/_gtkgui.gtk
 pymazon/__init__.py
-pymazon/_qfmtdialog.py
-pymazon/_qfmtdialog.ui
+pymazon/_qtfmtdialog.py
+pymazon/_qtfmtdialog.ui
 pymazon/_qtgui.py
 pymazon/_qtgui.ui
 pymazon/backend.py
