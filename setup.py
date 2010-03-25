@@ -25,7 +25,7 @@ class InstallScripts(install_scripts):
     '''create the bat for windows so the launcher script
     works out of the box'''
     def run(self):
-        import os        
+        import os
         if os.name == 'nt':
             import sys
             parts = os.path.split(sys.executable)
@@ -33,7 +33,7 @@ class InstallScripts(install_scripts):
             script_path = os.path.join(py_path, 'Scripts')
             f = open(os.path.join(script_path, 'pymazon.bat'), 'w')
             pymazon = os.path.join(script_path, 'pymazon')
-            bat = '@' + ('"%s" "%s"' % (sys.executable, pymazon)) + ' %*' 
+            bat = '@' + ('"%s" "%s"' % (sys.executable, pymazon)) + ' %*'
             f.write(bat)
             f.close()
         install_scripts.run(self)
@@ -46,16 +46,16 @@ setup(name='Pymazon',
       author_email='sccolbert@gmail.com',
       url='http://code.google.com/p/pymazon/',
       packages=['pymazon'],
-      package_data={'pymazon':['pymazon.gtk', 'pymazon_qt.ui']},
+      package_data={'pymazon':['_gtkgui.gtk', '_qtgui.ui']},
       scripts=['./bin/pymazon'],
       license='GPLv3',
       long_description=\
 '''Pymazon is a Python implemented alternative to the Amazon mp3 downloader.
 It allows you to download legally purchased mp3's from the Amazon mp3 store
 using the .amz file provided by Amazon after the purchase. Pymazon can be
-used as both a command line client or a gui (if PyQt4 is installed). The 
-only hard external dependency is PyCrypto, which is available in the 
-Ubuntu (and likely other distro's) repositories (python-crypto), 
-and the cheese shop.''', 
+used as both a command line client or a gui (if PyQt4 is installed). The
+only hard external dependency is PyCrypto, which is available in the
+Ubuntu (and likely other distro's) repositories (python-crypto),
+and the cheese shop.''',
       cmdclass={'install_scripts': InstallScripts},
      )

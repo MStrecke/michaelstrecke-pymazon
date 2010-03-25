@@ -1,0 +1,396 @@
+<?xml version="1.0"?>
+<interface>
+  <requires lib="gtk+" version="2.16"/>
+  <!-- interface-naming-policy project-wide -->
+  <object class="GtkListStore" id="InfoModel">
+    <columns>
+      <!-- column-name CoverArtwork -->
+      <column type="GdkPixbuf"/>
+      <!-- column-name TrackNum -->
+      <column type="guint"/>
+      <!-- column-name SongTitle -->
+      <column type="gchararray"/>
+      <!-- column-name ArtistName -->
+      <column type="gchararray"/>
+      <!-- column-name AlbumName -->
+      <column type="gchararray"/>
+      <!-- column-name DownloadStatus -->
+      <column type="gchararray"/>
+      <!-- column-name DownloadPercent -->
+      <column type="gint"/>
+      <!-- column-name DownloadURL -->
+      <column type="gchararray"/>
+    </columns>
+  </object>
+  <object class="GtkWindow" id="Window">
+    <property name="border_width">5</property>
+    <property name="title" translatable="yes">Pymazon</property>
+    <property name="default_width">640</property>
+    <property name="default_height">480</property>
+    <child>
+      <object class="GtkVBox" id="vbox1">
+        <property name="visible">True</property>
+        <property name="orientation">vertical</property>
+        <property name="spacing">5</property>
+        <child>
+          <object class="GtkTable" id="table1">
+            <property name="visible">True</property>
+            <property name="n_rows">3</property>
+            <property name="n_columns">3</property>
+            <property name="column_spacing">5</property>
+            <property name="row_spacing">5</property>
+            <child>
+              <object class="GtkButton" id="Download">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="focus_on_click">False</property>
+                <child>
+                  <object class="GtkVBox" id="vbox2">
+                    <property name="visible">True</property>
+                    <property name="orientation">vertical</property>
+                    <child>
+                      <object class="GtkImage" id="image2">
+                        <property name="visible">True</property>
+                        <property name="stock">gtk-go-down</property>
+                      </object>
+                      <packing>
+                        <property name="position">0</property>
+                      </packing>
+                    </child>
+                    <child>
+                      <object class="GtkLabel" id="label3">
+                        <property name="visible">True</property>
+                        <property name="label" translatable="yes">Download</property>
+                      </object>
+                      <packing>
+                        <property name="position">1</property>
+                      </packing>
+                    </child>
+                  </object>
+                </child>
+              </object>
+              <packing>
+                <property name="left_attach">2</property>
+                <property name="right_attach">3</property>
+                <property name="bottom_attach">3</property>
+                <property name="x_options">GTK_FILL</property>
+                <property name="y_options">GTK_FILL</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkFileChooserButton" id="FileChooser">
+                <property name="visible">True</property>
+                <property name="create_folders">False</property>
+                <property name="title" translatable="yes">Select an AMZ File</property>
+              </object>
+              <packing>
+                <property name="left_attach">1</property>
+                <property name="right_attach">2</property>
+                <property name="y_options">GTK_FILL</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkFileChooserButton" id="DirectoryChooser">
+                <property name="visible">True</property>
+                <property name="action">select-folder</property>
+                <property name="focus_on_click">False</property>
+                <property name="title" translatable="yes">Select A Save Directory</property>
+              </object>
+              <packing>
+                <property name="left_attach">1</property>
+                <property name="right_attach">2</property>
+                <property name="top_attach">1</property>
+                <property name="bottom_attach">2</property>
+                <property name="y_options">GTK_FILL</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="label1">
+                <property name="visible">True</property>
+                <property name="xalign">1</property>
+                <property name="label" translatable="yes">AMZ File</property>
+                <property name="justify">center</property>
+              </object>
+              <packing>
+                <property name="x_options">GTK_SHRINK</property>
+                <property name="y_options">GTK_FILL</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="label2">
+                <property name="visible">True</property>
+                <property name="xalign">1</property>
+                <property name="label" translatable="yes">Save Directory</property>
+              </object>
+              <packing>
+                <property name="top_attach">1</property>
+                <property name="bottom_attach">2</property>
+                <property name="x_options">GTK_FILL</property>
+                <property name="y_options">GTK_SHRINK</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="label4">
+                <property name="visible">True</property>
+                <property name="xalign">1</property>
+                <property name="label" translatable="yes">Name Format</property>
+              </object>
+              <packing>
+                <property name="top_attach">2</property>
+                <property name="bottom_attach">3</property>
+                <property name="x_options">GTK_FILL</property>
+                <property name="y_options">GTK_EXPAND | GTK_SHRINK</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkComboBox" id="FormatStrings">
+                <property name="visible">True</property>
+                <property name="active">0</property>
+                <property name="button_sensitivity">on</property>
+                <child>
+                  <object class="GtkCellRendererText" id="cellrenderertext1"/>
+                  <attributes>
+                    <attribute name="markup">0</attribute>
+                  </attributes>
+                </child>
+              </object>
+              <packing>
+                <property name="left_attach">1</property>
+                <property name="right_attach">2</property>
+                <property name="top_attach">2</property>
+                <property name="bottom_attach">3</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkScrolledWindow" id="scrolledwindow1">
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="hscrollbar_policy">automatic</property>
+            <property name="vscrollbar_policy">automatic</property>
+            <child>
+              <object class="GtkTreeView" id="treeview1">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="model">InfoModel</property>
+                <child>
+                  <object class="GtkTreeViewColumn" id="ColArtwork">
+                    <property name="spacing">2</property>
+                    <property name="title">Artwork</property>
+                    <property name="alignment">0.5</property>
+                    <child>
+                      <object class="GtkCellRendererPixbuf" id="RenderArtwork"/>
+                      <attributes>
+                        <attribute name="pixbuf">0</attribute>
+                      </attributes>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkTreeViewColumn" id="ColNum">
+                    <property name="spacing">2</property>
+                    <property name="title">Track #</property>
+                    <property name="alignment">0.5</property>
+                    <child>
+                      <object class="GtkCellRendererText" id="RenderNum"/>
+                      <attributes>
+                        <attribute name="text">1</attribute>
+                      </attributes>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkTreeViewColumn" id="ColTitle">
+                    <property name="resizable">True</property>
+                    <property name="spacing">2</property>
+                    <property name="title">Title</property>
+                    <property name="expand">True</property>
+                    <property name="alignment">0.5</property>
+                    <child>
+                      <object class="GtkCellRendererText" id="RenderTitle"/>
+                      <attributes>
+                        <attribute name="text">2</attribute>
+                      </attributes>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkTreeViewColumn" id="ColArtist">
+                    <property name="resizable">True</property>
+                    <property name="spacing">2</property>
+                    <property name="title">Artist</property>
+                    <property name="expand">True</property>
+                    <property name="alignment">0.5</property>
+                    <child>
+                      <object class="GtkCellRendererText" id="RenderArtist"/>
+                      <attributes>
+                        <attribute name="text">3</attribute>
+                      </attributes>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkTreeViewColumn" id="ColAlbum">
+                    <property name="resizable">True</property>
+                    <property name="spacing">2</property>
+                    <property name="title">Album</property>
+                    <property name="expand">True</property>
+                    <property name="alignment">0.5</property>
+                    <child>
+                      <object class="GtkCellRendererText" id="RenderAlbum"/>
+                      <attributes>
+                        <attribute name="text">4</attribute>
+                      </attributes>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkTreeViewColumn" id="ColStatus">
+                    <property name="resizable">True</property>
+                    <property name="spacing">2</property>
+                    <property name="title">Status</property>
+                    <property name="expand">True</property>
+                    <property name="alignment">0.5</property>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+          <packing>
+            <property name="position">1</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+  </object>
+  <object class="GtkDialog" id="FormatDialog">
+    <property name="border_width">5</property>
+    <property name="title" translatable="yes">Custom Format String...</property>
+    <property name="modal">True</property>
+    <property name="type_hint">normal</property>
+    <property name="has_separator">False</property>
+    <child internal-child="vbox">
+      <object class="GtkVBox" id="dialog-vbox1">
+        <property name="visible">True</property>
+        <property name="orientation">vertical</property>
+        <property name="spacing">2</property>
+        <child>
+          <object class="GtkVBox" id="vbox3">
+            <property name="visible">True</property>
+            <property name="orientation">vertical</property>
+            <property name="spacing">5</property>
+            <child>
+              <object class="GtkHBox" id="hbox2">
+                <property name="visible">True</property>
+                <property name="spacing">5</property>
+                <child>
+                  <object class="GtkLabel" id="label5">
+                    <property name="visible">True</property>
+                    <property name="xalign">1</property>
+                    <property name="label" translatable="yes">String</property>
+                  </object>
+                  <packing>
+                    <property name="expand">False</property>
+                    <property name="position">0</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkEntry" id="FormatEntry">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="invisible_char">&#x25CF;</property>
+                    <property name="text" translatable="yes">${tracknum} - ${title}</property>
+                    <property name="secondary_icon_stock">gtk-revert-to-saved</property>
+                    <property name="secondary_icon_activatable">True</property>
+                    <property name="secondary_icon_sensitive">True</property>
+                  </object>
+                  <packing>
+                    <property name="position">1</property>
+                  </packing>
+                </child>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkHSeparator" id="hseparator1">
+                <property name="visible">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="label6">
+                <property name="visible">True</property>
+                <property name="label" translatable="yes">Valid Formatting Tags: &lt;i&gt;${tracknum}&lt;/i&gt;, &lt;i&gt;${artist}&lt;/i&gt;, &lt;i&gt;${album}&lt;/i&gt;, &lt;i&gt;${title}&lt;/i&gt;
+
+Note: Do not include the '.mp3' at the end. That gets added automatically.</property>
+                <property name="use_markup">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="position">2</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="position">2</property>
+          </packing>
+        </child>
+        <child internal-child="action_area">
+          <object class="GtkHButtonBox" id="dialog-action_area1">
+            <property name="visible">True</property>
+            <property name="layout_style">end</property>
+            <child>
+              <object class="GtkButton" id="ButtonCancel">
+                <property name="label">gtk-cancel</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="use_stock">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkButton" id="ButtonOk">
+                <property name="label">gtk-ok</property>
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="receives_default">True</property>
+                <property name="use_stock">True</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">False</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="pack_type">end</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+    <action-widgets>
+      <action-widget response="0">ButtonCancel</action-widget>
+      <action-widget response="1">ButtonOk</action-widget>
+    </action-widgets>
+  </object>
+</interface>

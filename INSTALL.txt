@@ -24,41 +24,38 @@ I recommend pip over setuptools.
 $ easy_install pip
 }}}
 
-If you want to use the GUI, you will need to have PyQt4 installed. 
+If you want to use the GUI, you will need to have PyQt4 or PyGtk installed. 
 On Ubuntu:
     
 {{{
 $ sudo apt-get install python-qt4
 }}}
+or
+{{{
+$ sudo apt-get install python-gtk2
+}}}
 
-Once you have PyCrypto (and optionally PyQt4) installed, 
+Once you have PyCrypto (and optionally PyQt4 of PyGtk) installed, 
 you can install Pymazon.
 
-To get Pymazon from the cheeseshop, _use pip_. 
-*easy_install/setuptools is not supported and it will break Pymazon*:
+To get Pymazon from the cheeseshop:
     
 {{{
 $ pip install pymazon
 }}}
-
-If you're not using virtualenv, you may need to sudo:
-    
+or
 {{{
-$ sudo pip install pymazon
+$ easy_install pymazon
 }}}
 
-Or you can install it locally:
-    
-{{{
-$ sudo pip install --install-option='--user' pymazon
-}}}
+If you're not using virtualenv, you may need to sudo.   
 
 Or, to build/install Pymazon yourself (there's really nothing to _build_):
     
 {{{
-$ wget http://pymazon.googlecode.com/files/Pymazon-0.1beta.tar.gz
-$ tar -xzf Pymazon-0.1beta.tar.gz
-$ cd Pymazon-0.1beta
+$ wget http://pymazon.googlecode.com/files/Pymazon-0.1.1.tar.gz
+$ tar -xzf Pymazon-0.1.1.tar.gz
+$ cd Pymazon-0.1.1
 $ sudo python setup.py install
 }}}
 
