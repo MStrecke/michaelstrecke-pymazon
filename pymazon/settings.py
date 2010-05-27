@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import os
 import sys
 import warnings
-from ConfigParser import ConfigParser
+from ConfigParser import ConfigParser, NoOptionError, NoSectionError
 
 def pymazon_showwarning(message, category, *args):
     print 'Warning:'
@@ -62,7 +62,7 @@ class PymazonSettings(object):
             
     # some sensible defaults
     pymazon_dir = _get_pymazon_dir()
-    save_dir = os.getcwd()
+    save_dir = os.environ.get('XDG_MUSIC_DIR', os.getcwd())
     amz_dir = os.getcwd()
     name_template = '${tracknum} - ${title}'
     toolkit = 'qt4'
@@ -75,12 +75,11 @@ class PymazonSettings(object):
             msg = 'The specified setting is not a valid setting. '
             msg += 'Valid settings are: %s' % PymazonSettings.__all__
             raise PymazonSettingsError(msg)
-        
-        # handle the special cases
+                
         if attr == 'name_template':
             if not self.__validate_name_template(value):
-               # stay with the current
-               return 
+                # stay with the current
+                return
         elif attr == 'toolkit':
             # will print a warning if invalid
             if not self.__validate_toolkit(value):
@@ -93,6 +92,8 @@ class PymazonSettings(object):
             if not value:
                 # stay with the current
                 return
+        elif attr == 'save_dir' or attr == 'amz_dir':
+            value = os.path.expanduser(value)        
         else:
             pass               
                 
@@ -169,3 +170,8 @@ def _handle_config_file():
         except (NoOptionError, NoSectionError):
             pass
 _handle_config_file()
+
+if __name__ == '__main__':
+    settings = PymazonSettings()
+    print settings.save_dir
+    print settings.amz_dir
