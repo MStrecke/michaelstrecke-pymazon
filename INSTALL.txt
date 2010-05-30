@@ -1,0 +1,81 @@
+ 
+==Installation==
+Pymazon was made to provide an alternative to the Linux version of the Amazon 
+dowloader (and hopefully avoid most the issues that plague it). That said, 
+it should still run just fine under Windows. 
+
+First, make sure you have [http://www.pycrypto.org PyCrypto] installed. 
+On Ubuntu:
+    
+{{{
+$ sudo apt-get install python-crypto
+}}}
+
+or
+
+{{{
+$ pip install pycrypto
+}}}
+
+If you don't have pip installed, you can get it from the cheeseshop. 
+I recommend pip over setuptools.
+
+{{{
+$ easy_install pip
+}}}
+
+If you want to use the GUI, you will need to have PyQt4 or PyGtk installed. 
+On Ubuntu:
+    
+{{{
+$ sudo apt-get install python-qt4
+}}}
+or
+{{{
+$ sudo apt-get install python-gtk2
+}}}
+
+Once you have PyCrypto (and optionally PyQt4 of PyGtk) installed, 
+you can install Pymazon.
+
+To get Pymazon from the cheeseshop:
+    
+{{{
+$ pip install pymazon
+}}}
+or
+{{{
+$ easy_install pymazon
+}}}
+
+If you're not using virtualenv, you may need to sudo.   
+
+Or, to build/install Pymazon yourself (there's really nothing to _build_):
+    
+{{{
+$ wget http://pymazon.googlecode.com/files/Pymazon-0.1.1.tar.gz
+$ tar -xzf Pymazon-0.1.1.tar.gz
+$ cd Pymazon-0.1.1
+$ sudo python setup.py install
+}}}
+
+or, if you want to install locally
+
+{{{
+$ python setup.py install --user
+}}}
+
+If you install locally, you may need to symlink ~/.local/bin/pymazon 
+to a folder on your PATH
+
+You can also download the bleeding-edge source with Mercurial:
+    
+{{{
+$ hg clone https://pymazon.googlecode.com/hg/ pymazon 
+}}}
+
+Then just build/install it via:
+    
+{{{
+$ python setup.py install
+}}}

@@ -1,0 +1,17 @@
+README.txt
+LICENSE.txt
+INSTALL.txt
+CHANGELOG.txt
+setup.py
+./bin/pymazon
+pymazon/_gtkgui.gtk
+pymazon/__init__.py
+pymazon/_qtfmtdialog.py
+pymazon/_qtfmtdialog.ui
+pymazon/_qtgui.py
+pymazon/_qtgui.ui
+pymazon/backend.py
+pymazon/gtkgui.py
+pymazon/log_util.py
+pymazon/qtgui.py
+pymazon/settings.py

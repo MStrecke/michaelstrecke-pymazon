@@ -1,0 +1,28 @@
+Pymazon Changelog
+
+0.1.1
+-----
+- Added support for command line options and configuration file
+- Added support for save name templates
+- Added a threaded downloader which runs a user-specified simultaneous threads when in gui mode
+- Added a PyGtk Gui (Submitted by Raymond Myers)
+- Rewrote the QT Gui with Qt Designer and pyuic4 - this simplified and cleaned up a bunch of stuff
+- Added graphical progress bars to the Gui's
+- Removed a check that asserted the downloaded file size was the same as specified in the amz file
+  as Amazon was misreporting file size and it was causing Pymazon to erroneously fail
+- Cleaned up code all over the place: logging, settings, etc...
+
+0.1.0
+-----
+- Fixed empty log file deletion exception on Windows
+- Added download progress indicator
+- Fixed script launching issue on Windows by writing a 
+  .bat launcher during setup.py install
+- Change the default folder browsing behavior to be 
+  more intuitive.
+- Refactored some classes to make more sense and 
+  ease future maintainability. 
+  
+0.1beta
+-------
+Initial Release
