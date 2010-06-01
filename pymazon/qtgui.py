@@ -18,7 +18,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import os
 
 from PyQt4.QtGui import *
-from PyQt4.QtCore import Qt, QAbstractTableModel, pyqtSignal, QSize, QVariant
+from PyQt4.QtCore import Qt, QAbstractTableModel, pyqtSignal, QSize, QVariant,\
+                         QModelIndex, QAbstractItemModel
 
 from pymazon import _qtgui
 from pymazon import _qtfmtdialog
@@ -49,62 +50,105 @@ class FormatDialog(QDialog, _qtfmtdialog.Ui_Dialog):
     pass
 
 
-class TrackTableModel(QAbstractTableModel):
-    ''' The data model for the main table.'''
+class TreeNode(object):
+    def __init__(self, parent, row):
+        self.parent = parent
+        self.row = row
+        self.subnodes = self._get_children()
 
-    header = ['Artwork', 'Track #', 'Title', 'Artist', 'Album',
-              'Download Status']
-    header_map = {'Artwork':'image', 'Track #':'tracknum', 'Title':'title',
-                  'Artist':'artist', 'Album':'album',
-                  'Download Status':'status'}
+    def _get_children(self):
+        raise NotImplementedError()
+    
+    
+class TreeModel(QAbstractItemModel):
+    def __init__(self):
+        super(QAbstractItemModel, self).__init__() 
+        self.root_nodes = self._get_root_nodes()               
 
-    def __init__(self, amz_file=None, parent=None, *args):
-        super(TrackTableModel, self).__init__(parent, *args)
-        self.amz_file = amz_file
-        self.t_data = []
-        self.create_table_data()
+    def _get_root_nodes(self):
+        raise NotImplementedError()
 
-    def create_table_data(self):
-        if self.amz_file is None:
-            return
+    def index(self, row, column, parent):
+        if not parent.isValid():
+            return self.createIndex(row, column, self.root_nodes[row])
+        parent_node = parent.internalPointer()
+        return self.createIndex(row, column, parent_node.subnodes[row])
+
+    def parent(self, index):
+        if not index.isValid():
+            return QModelIndex()
+        node = index.internalPointer()
+        if node.parent is None:
+            return QModelIndex()
         else:
-            self.t_data = parse_tracks(self.amz_file)
+            return self.createIndex(node.parent.row, 0, node.parent)
+
+    def reset(self):
+        self.root_nodes = self._getRootNodes()
+        QAbstractItemModel.reset(self)
 
     def rowCount(self, parent):
-        return len(self.t_data)
-
-    def columnCount(self, parent):
-        return len(self.header)
-
-    def data(self, idx, role):
-        if not idx.isValid():
-            return None
-        elif role != Qt.DisplayRole:
-            return None
-        key = self.header_map[self.header[idx.column()]]
-        if key=='image':
-            return ''  # don't need to display the image url
-        return getattr(self.t_data[idx.row()], key)
-
-    def headerData(self, idx, orientation, role):
-        if orientation == Qt.Horizontal and role == Qt.DisplayRole:
-            return self.header[idx]
-        else:
-            return None
-
-    def get_table(self):
-        return self.t_data
+        if not parent.isValid():
+            return len(self.root_nodes)
+        node = parent.internalPointer()
+        return len(node.subnodes)    
+    
+ 
+class AmzElement(object):
+    def __init__(self, obj, subelements):
+        self.obj = obj
+        self.subelements = subelements
         
-    def set_progress(self, track, percent=None, txt=None):
-        column = self.header.index('Download Status')
-        idx = self.t_data.index(track)
-        midx = self.createIndex(idx, column)
-        if percent is None:
-            percent = -1
-        track.status = (percent, txt)
-        self.dataChanged.emit(midx, midx)
+    def data(self):
+        return str(self.obj)
+    
+    
+class AmzNode(TreeNode):
+    def __init__(self, ref, parent, row):
+        self.ref = ref
+        super(AmzNode, self).__init__(parent, row)
+        
+    def _get_children(self):
+        return [AmzNode(elem, self, idx) for idx, elem 
+                in enumerate(self.ref.subelements)]
+    
+    
+class AmzTreeModel(TreeModel):
+    
+    headers = ['Title', 'Status']
+    
+    def __init__(self, albums):
+        self.albums = albums
+        self.create_tree_data()
+        super(AmzTreeModel, self).__init__()
+        
+    def create_tree_data(self):
+        self.root_elements = []
+        for album in self.albums:
+            subelements = [AmzElement(track, []) for track in album.tracks]
+            self.root_elements.append(AmzElement(album, subelements))    
+    
+    def _get_root_nodes(self):
+        return [AmzNode(elem, None, idx) for idx, elem
+                in enumerate(self.root_elements)]
+    
+    def columnCount(self, parent):
+        return 2    
+    
+    def data(self, index, role):
+        if not index.isValid():
+            return None
+        node = index.internalPointer()
+        if role == Qt.DisplayRole and index.column() == 0:            
+            return node.ref.data()
+        return None   
+    
+    def headerData(self, section, orientation, role):
+        if orientation == Qt.Horizontal and role == Qt.DisplayRole:
+            return self.headers[section]
+        return None
 
-
+    
 class ProgressBarDelegate(QStyledItemDelegate):
     
     # sizeHint doesnt seem to do anything. So
@@ -150,8 +194,10 @@ class MainWindow(QMainWindow, _qtgui.Ui_MainWindow):
 
         self.dir_lineedit.setText(settings.save_dir)
         self.setup_fmt_box()
-        self.load_new_amz_file(amz_file)
-
+        
+        if amz_file:
+            self.load_new_amz_file(amz_file)        
+        
     def setup_fmt_box(self):
         # setup the format box
         self.custom_fmt = 'Custom...'
@@ -252,12 +298,15 @@ class MainWindow(QMainWindow, _qtgui.Ui_MainWindow):
         self.dir_button.setEnabled(False)
 
     def load_new_amz_file(self, amz_file):
-        self.table_model = TrackTableModel(amz_file)
-        self.tableView.setModel(self.table_model)
-        self.show_album_art()        
-        self.pbardelegate = ProgressBarDelegate()
-        self.tableView.setItemDelegateForColumn(5, self.pbardelegate)
-        self.set_table_sizing()
+        parser = AmzParser()
+        parser.parse(amz_file)
+        albums = parser.get_parsed_objects()        
+        self.tree_model = AmzTreeModel(albums)        
+        self.treeView.setModel(self.tree_model)
+        #self.show_album_art()        
+        #self.pbardelegate = ProgressBarDelegate()
+        #self.tableView.setItemDelegateForColumn(5, self.pbardelegate)
+        #self.set_table_sizing()
 
     def show_album_art(self):
         table = self.table_model.get_table()

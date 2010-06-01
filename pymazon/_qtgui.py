@@ -51,9 +51,9 @@ class Ui_MainWindow(object):
         self.fmt_box = QtGui.QComboBox(self.centralwidget)
         self.fmt_box.setObjectName("fmt_box")
         self.gridLayout.addWidget(self.fmt_box, 2, 1, 1, 1)
-        self.tableView = QtGui.QTableView(self.centralwidget)
-        self.tableView.setObjectName("tableView")
-        self.gridLayout.addWidget(self.tableView, 3, 0, 1, 3)
+        self.treeView = QtGui.QTreeView(self.centralwidget)
+        self.treeView.setObjectName("treeView")
+        self.gridLayout.addWidget(self.treeView, 3, 0, 1, 3)
         MainWindow.setCentralWidget(self.centralwidget)
 
         self.retranslateUi(MainWindow)

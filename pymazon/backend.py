@@ -93,6 +93,8 @@ class Album(object):
     def image(self):
         return image_cache.get(self.image_url)
     
+    def __str__(self):
+        return self.artist + ' - ' + self.title
 
 class Track(object):
     def __init__(self, album, title=None, number=None, url=None, filesize=None):
@@ -136,6 +138,9 @@ class Track(object):
         f = open(fname, 'wb')
         f.write(self.data)
         f.close()
+        
+    def __str__(self):
+        return self.number + '. ' + self.title
 
         
 class DecryptException(Exception):
