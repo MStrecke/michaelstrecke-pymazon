@@ -100,7 +100,7 @@ class AmzElement(object):
         self.subelements = subelements
         
     def data(self):
-        return str(self.obj)
+        return unicode(self.obj)
     
     
 class AmzNode(TreeNode):
@@ -159,22 +159,26 @@ class ProgressBarDelegate(QStyledItemDelegate):
     def paint(self, painter, options, index):        
         opts = QStyleOptionProgressBar()
         opts.rect = options.rect        
-        height = int(opts.rect.height())
-        opts.rect.setHeight(height/2)
-        opts.rect.translate(0, height/4)
         opts.minimum = 1
         opts.maximum = 100
         opts.textVisible = True        
         data = index.data().toPyObject()        
-        if not data:
-            percent = -1
-            txt = 'Ready.'
+        if not data:            
+            txt = 'Ready'
+            QApplication.style().drawItemText(painter, opts.rect, 1, 
+                                              opts.palette, True, txt)
         else:            
-            percent, txt = data            
-        opts.progress = percent
-        opts.text = txt
-        QApplication.style().drawControl(QStyle.CE_ProgressBar, opts, painter)
-        
+            percent, txt = data
+            if percent == 100:
+                txt = 'Complete!'
+                QApplication.style().drawItemText(painter, opts.rect, 1, 
+                                                  opts.palette, True, 
+                                                  txt)
+            else:
+                opts.progress = percent
+                opts.text = txt
+                QApplication.style().drawControl(QStyle.CE_ProgressBar, opts, 
+                                                 painter)        
 
 
 class MainWindow(QMainWindow, _qtgui.Ui_MainWindow):    
@@ -237,10 +241,12 @@ class MainWindow(QMainWindow, _qtgui.Ui_MainWindow):
         dialog.exec_()
         return dialog.lineEdit.text()
 
-    def set_table_sizing(self):
-        self.tableView.resizeColumnsToContents()
-        self.tableView.resizeRowsToContents()
-        self.tableView.horizontalHeader().setStretchLastSection(True)
+    def set_tree_sizing(self):
+        self.treeView.setColumnWidth(0, 200)
+        self.treeView.setColumnWidth(1, 100)
+        #self.treeView.resizeColumnToContents(0)
+        #self.treeView.resizeRowsToContents()
+        #self.tableView.horizontalHeader().setStretchLastSection(True)
 
     def new_amz(self):
         caption = 'Choose AMZ File'
@@ -304,9 +310,9 @@ class MainWindow(QMainWindow, _qtgui.Ui_MainWindow):
         self.tree_model = AmzTreeModel(albums)        
         self.treeView.setModel(self.tree_model)
         #self.show_album_art()        
-        #self.pbardelegate = ProgressBarDelegate()
-        #self.tableView.setItemDelegateForColumn(5, self.pbardelegate)
-        #self.set_table_sizing()
+        self.pbardelegate = ProgressBarDelegate()
+        self.treeView.setItemDelegateForColumn(1, self.pbardelegate)
+        self.set_tree_sizing()
 
     def show_album_art(self):
         table = self.table_model.get_table()
