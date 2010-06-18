@@ -23,8 +23,8 @@ import sys
 #for dev only
 sys.path.append('/home/brucewayne/development/pymazon/hg')
 from optparse import OptionParser
-from pymazon.settings import settings
-from pymazon.log_util import PymazonLogger
+from pymazon.core.settings import settings
+from pymazon.util.log_util import PymazonLogger
 
 
 
@@ -153,17 +153,18 @@ $ pymazon -d ~/Music -s '${artist}/${album}/${tracknum} - ${title}' ~/foo.amz
     if options.command_line:
         run_command_line(args)
     else:
-        amz_file = validate_args(args) if args else None
+        amz_files = validate_args(args) if args else []
         toolkit = settings.toolkit
         if toolkit == 'qt4':
             try:
-                from pymazon.qtgui import MainWindow
+                from pymazon.qt.ui import MainWindow
                 from PyQt4.QtGui import QApplication
                 app = QApplication([])
-                win = MainWindow(amz_file)
+                win = MainWindow(amz_files)
                 win.show()
                 app.exec_()
-            except ImportError:
+            except ImportError, e:
+                print e
                 msg = ('Unable to import PyQt4. You can still use Pymazon '
                        'via the commmand line with the -c switch. '
                        'Type `pymazon --help` for more info.')
@@ -172,7 +173,7 @@ $ pymazon -d ~/Music -s '${artist}/${album}/${tracknum} - ${title}' ~/foo.amz
             try:
                 from pymazon.gtkgui import MainWindow
                 import gtk
-                app = MainWindow(amz_file)
+                app = MainWindow(amz_files)
                 app.start()
             except ImportError:
                 msg = ('Unable to import PyGtk. You can still use Pymazon '

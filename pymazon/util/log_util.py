@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import os
 import logging
 from datetime import datetime
-from pymazon.settings import settings
+from pymazon.core.settings import settings
     
 
 class SimpleCache(object):    
