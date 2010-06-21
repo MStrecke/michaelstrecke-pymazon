@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file '_ui.ui'
 #
-# Created: Thu Jun 17 23:25:02 2010
+# Created: Sun Jun 20 17:08:53 2010
 #      by: PyQt4 UI code generator 4.7.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -67,7 +67,7 @@ class Ui_MainWindow(object):
         self.gridLayout.addWidget(self.widget, 0, 0, 1, 1)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menuBar = QtGui.QMenuBar(MainWindow)
-        self.menuBar.setGeometry(QtCore.QRect(0, 0, 664, 25))
+        self.menuBar.setGeometry(QtCore.QRect(0, 0, 664, 23))
         self.menuBar.setObjectName("menuBar")
         self.menuFile = QtGui.QMenu(self.menuBar)
         self.menuFile.setObjectName("menuFile")
@@ -76,8 +76,7 @@ class Ui_MainWindow(object):
         MainWindow.setMenuBar(self.menuBar)
         self.toolBar = QtGui.QToolBar(MainWindow)
         self.toolBar.setEnabled(True)
-        self.toolBar.setIconSize(QtCore.QSize(32, 32))
-        self.toolBar.setToolButtonStyle(QtCore.Qt.ToolButtonIconOnly)
+        self.toolBar.setToolButtonStyle(QtCore.Qt.ToolButtonTextUnderIcon)
         self.toolBar.setObjectName("toolBar")
         MainWindow.addToolBar(QtCore.Qt.ToolBarArea(QtCore.Qt.TopToolBarArea), self.toolBar)
         self.actionEdit = QtGui.QAction(MainWindow)

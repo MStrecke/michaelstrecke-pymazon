@@ -27,64 +27,51 @@ from pymazon.core.settings import settings
 from pymazon.util.log_util import PymazonLogger
 
 
-
 logger = PymazonLogger('main')
 
 
-def validate_args(args):
-    # validates that the only positional arg is a valid .amz file
-    if (not args) or (len(args) != 1):
-        raise ValueError('Only a single positional argument may be supplied')        
-    amz = args[0]
-    if not amz.endswith('.amz'):
-        raise ValueError('Positional argument must be a .amz file')        
-    if not os.path.exists(amz):
-        raise ValueError('AMZ file does not exist. Please check the path and '
-                         'try again.')       
-    return amz
-
-
-def run_command_line(args):
-
-    from pymazon.backend import parse_tracks, Downloader
-
-    amz = validate_args(args)
-    parsed_tracks = parse_tracks(amz)
+def run_command_line(amzs):
+    from pymazon.core.parser import AmzParser
+    from pymazon.core.downloader import Downloader
+    from pymazon.core.tree_model import TreeModel
+    from pymazon.core.item_model import Track
+    
     save_dir = settings.save_dir
     if not os.access(save_dir, os.W_OK):
         msg = ('Unable to write to target directory %s. '
                'Ensure the directory exits and write '
                'permission is granted.' % save_dir)
         raise IOError(msg)
+    
+    parser = AmzParser()
+    for f in amzs:
+        parser.parse(f)
+    objects = parser.get_parsed_objects()        
+    tree_model = TreeModel()
+    tree_model.create_tree(objects)    
 
     print '\nFiles will be saved to %s' % save_dir
     print 'with the name format %s\n' % settings.name_template
-
-    def dl_printer(track, status, *args):
-        if status == 0:
-            print('Downloading track %s by %s on album %s. '
-                  % (track.title, track.artist, track.album))
-        elif status == 1:
-            sys.stdout.write('.')
-            sys.stdout.flush()
-        elif status == 2:
-            print('Complete!')
-        elif status == 3:
-            print 'Error - Check Log!'
-        elif status == 4:
-            print 'Downloads Complete!'
-        else:
-            pass
+        
+    def dl_printer(node, current_node=[None]):
+        if isinstance(node.elem.obj, Track):
+            if node is current_node[-1]:
+                sys.stdout.write('.')
+                sys.stdout.flush()
+            else:
+                current_node.append(node)
+                print '    %s' % unicode(node.elem.obj)
+           
+    def finished_cb():
+        print 'All downloads complete!'
 
     settings.num_threads = 1 # until we get a better dl_printer
-    dl = Downloader(save_dir, parsed_tracks, dl_printer)
+    dl = Downloader(tree_model, dl_printer, finished_cb)
     dl.start()
     dl.join()
 
 
-def main():
-    # parse the command line options, options repeated here will
-    # override those set by the config file
+def parse_options():    
     parser = OptionParser()
     parser.add_option('-d', '--dir', dest='save_dir',
                       help='Directory in which to save the downloads. '
@@ -92,7 +79,8 @@ def main():
     parser.add_option('-c', '--command-line', dest='command_line',
                       help='Run Pymazon as a command line script. '
                            'If this option is used, it must be accompanied '
-                           'by a path to a .amz file as a positional argument.',
+                           'by a path to one or more .amz files as a positional '
+                           'argument.',
                       action='store_true', default=False)
     parser.add_option('-s', '--save-name-format', dest='fmt', help=\
 '''A format string to tell Pymazon how to format the mp3 file names.
@@ -104,8 +92,7 @@ of the name '1 - foosong.mp3' for example. Valid tags are:
     ${artist}
     ${album}
 
-and can appear in any order. The ${title} tag must be present at a minimum,
-if not, Pymazon reverts to the default setting of '${tracknum} - ${title}'.
+and can appear in any order.
 
 The format given on the command line MUST be surrounded in single quotes:
 $ pymazon --save-name-format='${tracknum} - ${artist} - ${title}'
@@ -138,10 +125,26 @@ $ pymazon -d ~/Music -s '${artist}/${album}/${tracknum} - ${title}' ~/foo.amz
                            'downloads. When using the command line interfaces, '
                            'the number of threads is always 1.')
 
-    (options, args) = parser.parse_args()
+    return parser.parse_args()
+  
 
+def validate_args(args):
+    # validates that the only positional args are valid .amz files
+    for arg in args:
+        if not arg.endswith('.amz'):
+            raise ValueError('Positional arguments must be .amz files.')        
+        if not os.path.isfile(arg):
+            raise ValueError('AMZ file %s does not exist. Please check the path '
+                             'and try again.' % arg)       
+    return args
+
+
+def main():
+    
+    options, args = parse_options()    
+    
     if options.save_dir:
-        settings.save_dir = options.save_dir
+        settings.save_dir = options.save_dir        
     if options.fmt:
         settings.name_template = options.fmt
     if options.toolkit:
@@ -149,9 +152,10 @@ $ pymazon -d ~/Music -s '${artist}/${album}/${tracknum} - ${title}' ~/foo.amz
     if options.num_threads:
         settings.num_threads = options.num_threads
 
-
+    amzs = validate_args(args)
+    
     if options.command_line:
-        run_command_line(args)
+        run_command_line(amzs)
     else:
         amz_files = validate_args(args) if args else []
         toolkit = settings.toolkit
@@ -161,7 +165,7 @@ $ pymazon -d ~/Music -s '${artist}/${album}/${tracknum} - ${title}' ~/foo.amz
                 from PyQt4.QtGui import QApplication
                 app = QApplication([])
                 win = MainWindow(amz_files)
-                win.show()
+                win.show()                
                 app.exec_()
             except ImportError, e:
                 print e

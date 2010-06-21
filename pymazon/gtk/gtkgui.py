@@ -56,7 +56,7 @@ class MyProgressRenderer(gtk.CellRendererProgress):
 
     def do_render(self, window, widget, background_area, area, expose_area,
                   flags):
-
+        print 'here'
         # Don't draw when the 'text' is '--':
         if self.get_property("text") == "--":
             return

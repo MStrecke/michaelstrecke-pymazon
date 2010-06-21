@@ -77,11 +77,6 @@
           <string>gtk</string>
          </property>
         </item>
-        <item>
-         <property name="text">
-          <string>cmd</string>
-         </property>
-        </item>
        </widget>
       </item>
      </layout>

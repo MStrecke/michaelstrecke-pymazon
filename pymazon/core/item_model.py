@@ -34,7 +34,7 @@ class Container(object):
 class HasStatus(Container):
     def __init__(self):
         super(HasStatus, self).__init__()
-        self._progress = -1
+        self._progress = 0
         self._message = 'Ready'
         
     def _get_status(self):
@@ -61,18 +61,7 @@ class Downloadable(HasStatus):
         super(Downloadable, self).__init__()
         self.url = url       
         
-    def save(self , fname, data=None):
-        if not data:
-            raise IOError('No data to save.')       
-        # make any intermediate directories
-        head, tail = os.path.split(fname)
-        if not os.path.exists(head):
-            os.makedirs(head)
-        f = open(fname, 'wb')
-        f.write(data)
-        f.close()       
-    
-    def safe_save_name(self, fname):
+    def _safe_save_name(self, fname):
         # ensure we don't overwrite any files
         i = 1
         nfname = fname
@@ -84,7 +73,19 @@ class Downloadable(HasStatus):
             i += 1
         return nfname
     
-
+    def save(self , fname, data=None):
+        fname = self._safe_save_name(fname)
+        if not data:
+            raise IOError('No data to save.')       
+        # make any intermediate directories
+        head, tail = os.path.split(fname)
+        if not os.path.exists(head):
+            os.makedirs(head)
+        f = open(fname, 'wb')
+        f.write(data)
+        f.close()   
+    
+    
 class Album(HasStatus):
     def __init__(self, title=None, artist=None, image_url=None, tracks=None):
         super(Album, self).__init__()
@@ -122,9 +123,8 @@ class Track(Downloadable):
                                       tracknum=self.number,
                                       album=self.album.title)
         
-        save_path = os.path.join(settings.save_dir, sn + '.' + self.extension)        
-        safe_save_path = self.safe_save_name(save_path)
-        super(Track, self).save(safe_save_path, data)        
+        save_path = os.path.join(settings.save_dir, sn + '.' + self.extension)       
+        super(Track, self).save(save_path, data)        
     
     def __unicode__(self):
         # for display purposes

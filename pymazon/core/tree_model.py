@@ -26,7 +26,14 @@ class TreeNode(object):
 
     def _get_children(self):
         return [TreeNode(elem, self, idx) for idx, elem 
-                in enumerate(self.elem.subelements)] 
+                in enumerate(self.elem.subelements)]
+
+    def __getitem__(self, n):
+        if not type(n) == int:
+            raise ValueError('Can only index with integer values')
+        if n < 0 or n >= len(self.subnodes):
+            raise ValueError('Index out of Range')
+        return self.subnodes[n] 
     
 
 class TreeElement(object):
@@ -55,7 +62,7 @@ class TreeModel(object):
         
     def _get_root_nodes(self):
         return [TreeNode(elem, None, idx) 
-                for idx, elem in enumerate(self.root_elements)]
+                for idx, elem in enumerate(self.root_elements)]    
     
     def get_root_elements(self):
         return self.root_elements

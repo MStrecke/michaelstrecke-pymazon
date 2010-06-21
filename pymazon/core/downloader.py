@@ -16,13 +16,12 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import time
 import urllib2
 import threading
 from cStringIO import StringIO
 from collections import deque
 
-from pymazon.core.item_model import Downloadable, HasStatus
+from pymazon.core.item_model import Downloadable
 from pymazon.core.tree_model import TreeModel
 from pymazon.core.settings import settings
 from pymazon.util.log_util import PymazonLogger
@@ -36,6 +35,7 @@ class _DownloadWorker(threading.Thread):
         self.parent = parent        
         self._abort = False
         self._pause = False
+        self.node = None
         
         # just in case the amazon servers want to get sneaky and redirect 
         self.redirects = urllib2.HTTPRedirectHandler()
@@ -65,9 +65,9 @@ class _DownloadWorker(threading.Thread):
         
         try:
             obj.save(data)
-        except Exception, e:
+        except IOError, e:
             logger.error('Saving file %s \n %s \n' % (dir(obj), e))
-            obj.status = (-1, 'Error!')
+            obj.status = (0, 'Error!')
             self.parent.update(self.node)
             return
         
@@ -76,13 +76,13 @@ class _DownloadWorker(threading.Thread):
         
     def _connect(self, obj):
         request = urllib2.Request(obj.url)        
-        obj.status = (-1, 'Connecting...')
+        obj.status = (0, 'Connecting...')
         self.parent.update(self.node)
         try:
             handle = self.opener.open(request)
         except urllib2.URLError, e:
             logger.error('Opening request at url: %s \n %s \n' % (obj.url, e))
-            obj.status = (-1, 'Error!')
+            obj.status = (0, 'Error!')
             self.parent.update(self.node)
             return
         return handle   
@@ -104,13 +104,14 @@ class _DownloadWorker(threading.Thread):
                     break
                 buf.write(chunk)
                 perc_complete += 1
+                perc_complete = min(100, perc_complete)
                 obj.status = (perc_complete, '%s%%' % perc_complete)
                 self.parent.update(self.node)                
         # purposely swallow any and all exceptions during downloading so 
         # other tracks can continue
         except Exception, e:
             logger.error('Reading from opened url: %s \n %s\n' % (obj.url, e))
-            obj.status = (-1, 'Error!')
+            obj.status = (0, 'Error!')
             self.parent.update(self.node)
             buf.close()
             return           
@@ -120,16 +121,19 @@ class _DownloadWorker(threading.Thread):
 
 
 class Downloader(threading.Thread):
-    def __init__(self, tree, update_cb=lambda a: None,
-                             finished_cb=lambda: None):
+    def __init__(self, tree, update_cb=lambda a: None, 
+                 finished_cb=lambda: None):
         super(Downloader, self).__init__()
+        
         if not isinstance(tree, TreeModel):
             raise ValueError('tree must be an instance of TreeModel')
         
-        self.tree = tree        
-        self.queue = deque(self.get_download_nodes())
+        self.tree = tree
         self.update_cb = update_cb
-        self.finished_cb = finished_cb                   
+        self.finished_cb = finished_cb   
+        self.workers = []
+        self.queue = deque(self.get_download_nodes())
+                        
         
         # don't launch more threads than we can use
         self.num_threads = min(settings.num_threads, len(self.queue))        

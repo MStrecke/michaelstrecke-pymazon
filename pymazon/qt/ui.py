@@ -18,9 +18,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import os
 import webbrowser
 
-from PyQt4.QtGui import *
-from PyQt4.QtCore import Qt, QAbstractTableModel, pyqtSignal, pyqtSlot, QSize, QVariant,\
-                         QModelIndex, QAbstractItemModel, QByteArray
+from PyQt4.QtGui import QDialog, QStyledItemDelegate, QMainWindow, QFileDialog,\
+                        QMessageBox, QIcon, QPixmap, QApplication, QStyle,\
+                        QStyleOptionProgressBar
+from PyQt4.QtCore import Qt, pyqtSignal, pyqtSlot                         
 
 from pymazon.qt import _ui, _nameformatdialog, _settingsdialog
 from pymazon.core.parser import AmzParser
@@ -64,7 +65,9 @@ class SettingsDialog(QDialog, _settingsdialog.Ui_SettingsDialog):
                                                    settings.save_dir))
         if res:
             if not os.access(res, os.W_OK):
-                QMessageBox.information(self, 'No Access!', 'No write access to specified directory. Try again.')
+                msg = 'No write access to specified directory. '
+                msg += 'Try again.'
+                QMessageBox.information(self, 'No Access!', msg)
                 self.on_saveDirButton_clicked()
                 return
             self.saveDirLineEdit.setText(res)
@@ -92,9 +95,9 @@ class ProgressBarDelegate(QStyledItemDelegate):
         opts.maximum = 100
         opts.textVisible = True        
         data = index.data().toPyObject()        
-        percent, txt = data
-        if percent == 100 or percent == -1:
-            QApplication.style().drawItemText(painter, opts.rect, 1, 
+        percent, txt = data        
+        if txt == 'Error!' or txt == 'Ready' or txt == 'Complete!':
+            QApplication.style().drawItemText(painter, opts.rect, 4, 
                                               opts.palette, True, txt)
         else:
             opts.progress = percent
@@ -105,18 +108,20 @@ class ProgressBarDelegate(QStyledItemDelegate):
 
 class MainWindow(QMainWindow, _ui.Ui_MainWindow):
     
-    update_art = pyqtSignal(object)
+    updateInfo = pyqtSignal()
+    resetInfo = pyqtSignal()
     
     def __init__(self, amz_files, parent=None):
         QMainWindow.__init__(self, parent)
         self.setupUi(self)
         
-        loadFileIcon = QIcon(QPixmap(load_icon_path))
-        downloadIcon = QIcon(QPixmap(download_icon_path))
-        settingsIcon = QIcon(QPixmap(settings_icon_path))
-        showIcon = QIcon(QPixmap(show_icon_path))
-        exitIcon = QIcon(QPixmap(exit_icon_path))
+        loadFileIcon = QIcon.fromTheme('document-new', QIcon(QPixmap(load_icon_path)))
+        downloadIcon = QIcon.fromTheme('go-down', QIcon(QPixmap(download_icon_path)))
+        settingsIcon = QIcon.fromTheme('preferences-other', QIcon(QPixmap(settings_icon_path)))
+        showIcon = QIcon.fromTheme('emblem-downloads', QIcon(QPixmap(show_icon_path)))
+        exitIcon = QIcon.fromTheme('window-close', QIcon(QPixmap(exit_icon_path)))
         self.pythonPixmap = QPixmap(python_icon_path)
+        self.pymazon_text = self.nowDownloadingLabel.text()
         
         self.actionLoadFiles.setIcon(loadFileIcon)
         self.actionDownload.setIcon(downloadIcon)
@@ -127,24 +132,29 @@ class MainWindow(QMainWindow, _ui.Ui_MainWindow):
         
         self.settingsDialog = SettingsDialog(self)
                 
-        self.tree_model = TreeModel([])
-        self.downloader = None       
+        self.tree_model = None        
+        self.pbardelegate = ProgressBarDelegate()
+        self.treeView.setItemDelegateForColumn(1, self.pbardelegate)
+
         if amz_files:
             self.load_new_amz_files(amz_files)
             
-        self.current_album_art_url = ''
-        self.update_art.connect(self.update_album_art)
+        self.downloader = None
+        self.current_album = None
+        self.old_albums = []
+        self.updateInfo.connect(self.update_album_info)
+        self.resetInfo.connect(self.reset_displaybar_info)        
         
     @pyqtSlot()
     def on_actionLoadFiles_triggered(self):
         self.new_amz()
         
     @pyqtSlot()
-    def on_actionSettings_triggered(self):
-        self.settingsDialog.launch()
+    def on_actionSettings_triggered(self):        
+        self.settingsDialog.launch()        
         
     @pyqtSlot()
-    def on_actionDownload_triggered(self):
+    def on_actionDownload_triggered(self):        
         self.download_tracks()
         
     @pyqtSlot()
@@ -154,72 +164,88 @@ class MainWindow(QMainWindow, _ui.Ui_MainWindow):
     @pyqtSlot()
     def on_actionQuit_triggered(self):
         self.close()
-        
-    def set_tree_sizing(self):
-        self.treeView.expandAll()
-        self.treeView.resizeColumnToContents(0)
-        width = self.treeView.columnWidth(0)
-        self.treeView.setColumnWidth(1, 100)
-        self.treeView.setColumnWidth(0, width + 50)        
+    
+    def closeEvent(self, evt):
+        if self.downloader:
+            self.downloader.kill()
+        evt.accept()
 
     def new_amz(self):
         caption = 'Choose AMZ File'
         filefilter = "Amazon MP3 Download (*.amz)"
-        files = [str(f) for f in QFileDialog.getOpenFileNames(self, caption, '', filefilter)]
+        files = [str(f) for f in 
+                 QFileDialog.getOpenFileNames(self, caption, '', filefilter)]
         if files:
-            self.load_new_amz_files(files)    
-
-    def update_cb(self, node):
-        if isinstance(node.elem.obj, Album):
-            url = node.elem.obj.image_url
-            if not url == self.current_album_art_url:
-                self.current_album_art_url = url
-                self.update_art.emit(node.elem.obj)
+            self.load_new_amz_files(files)
             
-        self.tree_model.update_node(node)
-        
-    def finished_cb(self):
-        self.downloader = None
-
-    def download_tracks(self):
-        settings.save_dir = '/home/brucewayne/Music/amz_files/tests'
-        save_dir = settings.save_dir
-        if not os.access(save_dir, os.W_OK):
-            msg = 'No write access to save directory. '
-            msg += 'Choose a new directory with write privileges.'
-            d = QMessageBox()
-            d.setText(msg)
-            d.exec_()
-            return
-        
-        self.downloader = Downloader(self.tree_model, self.update_cb, self.finished_cb)
-        self.downloader.start()        
-
     def load_new_amz_files(self, amz_files):
         parser = AmzParser()
         for f in amz_files:
             parser.parse(f)
         objects = parser.get_parsed_objects()        
         self.tree_model = TreeModel(objects)        
-        self.treeView.setModel(self.tree_model)              
-        self.pbardelegate = ProgressBarDelegate()
-        self.treeView.setItemDelegateForColumn(1, self.pbardelegate)
-        self.set_tree_sizing()   
-            
-    def closeEvent(self, evt):
-        if self.downloader:
-            self.downloader.kill()
-        evt.accept()
+        self.treeView.setModel(self.tree_model) 
+        self.setup_treeview()      
+    
+    def setup_treeview(self):       
+        self.treeView.expandAll()
+        self.treeView.resizeColumnToContents(0)
+        width = self.treeView.columnWidth(0)
+        self.treeView.setColumnWidth(1, 100)
+        self.treeView.setColumnWidth(0, width + 50)
         
-    def update_album_art(self, album):
-        img = album.image
+    def download_tracks(self):
+        if not self.tree_model:
+            return
+        save_dir = settings.save_dir        
+        if not os.access(save_dir, os.W_OK):
+            msg = 'No write access to save directory. '
+            msg += 'Choose a new directory with write privileges.'
+            QMessageBox.information(self, 'No Access!', msg)
+            return        
+        self.downloader = Downloader(self.tree_model, self.update_cb, 
+                                     self.finished_cb)
+        self.actionDownload.setEnabled(False)
+        self.actionSettings.setEnabled(False)
+        self.actionLoadFiles.setEnabled(False)        
+        self.downloader.start()     
+
+    def update_cb(self, node):
+        if isinstance(node.elem.obj, Album):
+            if not node.elem.obj is self.current_album:
+                if node.elem.obj not in self.old_albums:
+                    self.old_albums.append(node.elem.obj)
+                    self.current_album = node.elem.obj
+                    self.updateInfo.emit()  
+                else:
+                    pass                          
+        self.tree_model.update_node(node)
+        
+    def finished_cb(self):        
+        self.downloader = None
+        self.resetInfo.emit()
+        self.actionDownload.setEnabled(True)
+        self.actionSettings.setEnabled(True)
+        self.actionLoadFiles.setEnabled(True)
+        
+    def reset_displaybar_info(self):
+        self.current_album = None
+        self.old_albums = []
+        self.nowDownloadingLabel.setText(self.pymazon_text)
+        self.albumArtLabel.setPixmap(self.pythonPixmap)
+        
+    def update_album_info(self):
+        self.update_album_art()
+        self.update_downloading_text()
+        
+    def update_album_art(self):
+        img = self.current_album.image
         pm = QPixmap()
         pm.loadFromData(img, None, Qt.AutoColor)
-        self.albumArtLabel.setPixmap(pm)
-        self.update_downloading_text(album)
+        self.albumArtLabel.setPixmap(pm)        
         
-    def update_downloading_text(self, album):
-        name = album.artist
-        title = album.title
+    def update_downloading_text(self):
+        name = self.current_album.artist
+        title = self.current_album.title
         txt = 'Now dowloading <b>%s</b> by <b>%s</b>' % (title, name)
         self.nowDownloadingLabel.setText(txt)

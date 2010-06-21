@@ -68,7 +68,7 @@ class _PymazonSettings(object):
         self._toolkit = 'qt4'
         self._num_threads = 1 
         self._read_config_file()
-        print self.save_dir
+        
     def _get_pymazon_dir(self):
         return self._pymazon_dir
     

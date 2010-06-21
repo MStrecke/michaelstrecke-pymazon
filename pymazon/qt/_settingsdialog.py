@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file '_settingsdialog.ui'
 #
-# Created: Thu Jun 17 21:57:53 2010
+# Created: Sun Jun 20 01:18:29 2010
 #      by: PyQt4 UI code generator 4.7.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -46,7 +46,6 @@ class Ui_SettingsDialog(object):
         self.toolkitComboBox.setObjectName("toolkitComboBox")
         self.toolkitComboBox.addItem("")
         self.toolkitComboBox.addItem("")
-        self.toolkitComboBox.addItem("")
         self.horizontalLayout_4.addWidget(self.toolkitComboBox)
         self.gridLayout.addWidget(self.groupBox_4, 2, 1, 1, 1)
         self.buttonBox = QtGui.QDialogButtonBox(SettingsDialog)
@@ -80,7 +79,6 @@ class Ui_SettingsDialog(object):
         self.groupBox_4.setTitle(QtGui.QApplication.translate("SettingsDialog", "Preferred GUI Backend", None, QtGui.QApplication.UnicodeUTF8))
         self.toolkitComboBox.setItemText(0, QtGui.QApplication.translate("SettingsDialog", "qt4", None, QtGui.QApplication.UnicodeUTF8))
         self.toolkitComboBox.setItemText(1, QtGui.QApplication.translate("SettingsDialog", "gtk", None, QtGui.QApplication.UnicodeUTF8))
-        self.toolkitComboBox.setItemText(2, QtGui.QApplication.translate("SettingsDialog", "cmd", None, QtGui.QApplication.UnicodeUTF8))
         self.groupBox.setTitle(QtGui.QApplication.translate("SettingsDialog", "Save Directory", None, QtGui.QApplication.UnicodeUTF8))
         self.saveDirButton.setText(QtGui.QApplication.translate("SettingsDialog", "Change", None, QtGui.QApplication.UnicodeUTF8))
 
