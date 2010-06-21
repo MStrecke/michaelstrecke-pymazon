@@ -157,14 +157,13 @@ def main():
     if options.command_line:
         run_command_line(amzs)
     else:
-        amz_files = validate_args(args) if args else []
         toolkit = settings.toolkit
         if toolkit == 'qt4':
             try:
                 from pymazon.qt.ui import MainWindow
                 from PyQt4.QtGui import QApplication
                 app = QApplication([])
-                win = MainWindow(amz_files)
+                win = MainWindow(amzs)
                 win.show()                
                 app.exec_()
             except ImportError, e:
@@ -175,9 +174,9 @@ def main():
                 raise ImportError(msg)
         elif toolkit == 'gtk':
             try:
-                from pymazon.gtkgui import MainWindow
+                from pymazon.gtk.ui import MainWindow
                 import gtk
-                app = MainWindow(amz_files)
+                app = MainWindow(amzs)
                 app.start()
             except ImportError:
                 msg = ('Unable to import PyGtk. You can still use Pymazon '

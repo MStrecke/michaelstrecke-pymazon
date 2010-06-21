@@ -28,7 +28,7 @@ gobject.type_register(ProgressRenderer)
 
 
 class MainWindow(gobject.GObject):    
-    def __init__(self):
+    def __init__(self, amzs):
         glade_fpath = os.path.join(os.path.split(__file__)[0], '_ui.glade')
         builder = gtk.Builder()
         builder.add_from_file(glade_fpath)
@@ -56,6 +56,8 @@ class MainWindow(gobject.GObject):
         
         self.downloader = None
         
+        if amzs:
+            self.load_new_amz_files(amzs)
         
     def connect_signals(self, builder):
         builder.connect_signals({'on_MainWindow_destroy': self.on_destroy})
@@ -156,10 +158,8 @@ class MainWindow(gobject.GObject):
         self.actionDownload.set_sensitive(True)
         self.actionSettings.set_sensitive(True)
         self.actionLoadFiles.set_sensitive(True)
-
-
-if __name__ == '__main__':
-    app = MainWindow()
-    gtk.gdk.threads_enter()    
-    gtk.main()
-    gtk.gdk.threads_leave()
+    
+    def start(self):        
+        gtk.gdk.threads_enter()    
+        gtk.main()
+        gtk.gdk.threads_leave()
