@@ -239,7 +239,7 @@ class MainWindow(QMainWindow, _qtgui.Ui_MainWindow):
         dialog = FormatDialog()
         dialog.setupUi(dialog)
         dialog.exec_()
-        return dialog.lineEdit.text()
+        return str(dialog.lineEdit.text())
 
     def set_tree_sizing(self):
         self.treeView.setColumnWidth(0, 200)
