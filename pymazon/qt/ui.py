@@ -164,6 +164,10 @@ class MainWindow(QMainWindow, _ui.Ui_MainWindow):
     @pyqtSlot()
     def on_actionQuit_triggered(self):
         self.close()
+        
+    @pyqtSlot()
+    def on_actionAbout_triggered(self):
+        webbrowser.open('http://code.google.com/p/pymazon')
     
     def closeEvent(self, evt):
         if self.downloader:
@@ -249,3 +253,9 @@ class MainWindow(QMainWindow, _ui.Ui_MainWindow):
         title = self.current_album.title
         txt = 'Now dowloading <b>%s</b> by <b>%s</b>' % (title, name)
         self.nowDownloadingLabel.setText(txt)
+        
+def main(amzs):
+    app = QApplication([])
+    win = MainWindow(amzs)
+    win.show()                
+    app.exec_()

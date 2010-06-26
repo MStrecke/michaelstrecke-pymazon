@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file '_ui.ui'
 #
-# Created: Sun Jun 20 17:08:53 2010
+# Created: Sat Jun 26 19:15:56 2010
 #      by: PyQt4 UI code generator 4.7.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -12,7 +12,7 @@ from PyQt4 import QtCore, QtGui
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(664, 536)
+        MainWindow.resize(640, 480)
         self.centralwidget = QtGui.QWidget(MainWindow)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
@@ -67,7 +67,7 @@ class Ui_MainWindow(object):
         self.gridLayout.addWidget(self.widget, 0, 0, 1, 1)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menuBar = QtGui.QMenuBar(MainWindow)
-        self.menuBar.setGeometry(QtCore.QRect(0, 0, 664, 23))
+        self.menuBar.setGeometry(QtCore.QRect(0, 0, 640, 25))
         self.menuBar.setObjectName("menuBar")
         self.menuFile = QtGui.QMenu(self.menuBar)
         self.menuFile.setObjectName("menuFile")
@@ -79,8 +79,6 @@ class Ui_MainWindow(object):
         self.toolBar.setToolButtonStyle(QtCore.Qt.ToolButtonTextUnderIcon)
         self.toolBar.setObjectName("toolBar")
         MainWindow.addToolBar(QtCore.Qt.ToolBarArea(QtCore.Qt.TopToolBarArea), self.toolBar)
-        self.actionEdit = QtGui.QAction(MainWindow)
-        self.actionEdit.setObjectName("actionEdit")
         self.actionLoadFiles = QtGui.QAction(MainWindow)
         self.actionLoadFiles.setIconVisibleInMenu(True)
         self.actionLoadFiles.setObjectName("actionLoadFiles")
@@ -90,8 +88,6 @@ class Ui_MainWindow(object):
         self.actionSettings = QtGui.QAction(MainWindow)
         self.actionSettings.setIconVisibleInMenu(True)
         self.actionSettings.setObjectName("actionSettings")
-        self.actionHelp = QtGui.QAction(MainWindow)
-        self.actionHelp.setObjectName("actionHelp")
         self.actionAbout = QtGui.QAction(MainWindow)
         self.actionAbout.setObjectName("actionAbout")
         self.actionDownload = QtGui.QAction(MainWindow)
@@ -104,8 +100,6 @@ class Ui_MainWindow(object):
         self.menuFile.addAction(self.actionSettings)
         self.menuFile.addSeparator()
         self.menuFile.addAction(self.actionQuit)
-        self.menuHelp.addAction(self.actionHelp)
-        self.menuHelp.addSeparator()
         self.menuHelp.addAction(self.actionAbout)
         self.menuBar.addAction(self.menuFile.menuAction())
         self.menuBar.addAction(self.menuHelp.menuAction())
@@ -128,11 +122,9 @@ class Ui_MainWindow(object):
         self.menuFile.setTitle(QtGui.QApplication.translate("MainWindow", "File", None, QtGui.QApplication.UnicodeUTF8))
         self.menuHelp.setTitle(QtGui.QApplication.translate("MainWindow", "Help", None, QtGui.QApplication.UnicodeUTF8))
         self.toolBar.setWindowTitle(QtGui.QApplication.translate("MainWindow", "toolBar", None, QtGui.QApplication.UnicodeUTF8))
-        self.actionEdit.setText(QtGui.QApplication.translate("MainWindow", "Edit", None, QtGui.QApplication.UnicodeUTF8))
         self.actionLoadFiles.setText(QtGui.QApplication.translate("MainWindow", "Load File(s)", None, QtGui.QApplication.UnicodeUTF8))
         self.actionQuit.setText(QtGui.QApplication.translate("MainWindow", "Quit", None, QtGui.QApplication.UnicodeUTF8))
         self.actionSettings.setText(QtGui.QApplication.translate("MainWindow", "Preferences", None, QtGui.QApplication.UnicodeUTF8))
-        self.actionHelp.setText(QtGui.QApplication.translate("MainWindow", "Help", None, QtGui.QApplication.UnicodeUTF8))
         self.actionAbout.setText(QtGui.QApplication.translate("MainWindow", "About", None, QtGui.QApplication.UnicodeUTF8))
         self.actionDownload.setText(QtGui.QApplication.translate("MainWindow", "Download", None, QtGui.QApplication.UnicodeUTF8))
         self.actionDownload.setToolTip(QtGui.QApplication.translate("MainWindow", "Download", None, QtGui.QApplication.UnicodeUTF8))

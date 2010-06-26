@@ -9,12 +9,10 @@ sys.path.append('/home/brucewayne/development/pymazon/hg')
 
 from pymazon.resource import python_icon_path
 from pymazon.gtk.tree_model import TreeModel
+from pymazon.core.item_model import Album
 from pymazon.core.parser import AmzParser
 from pymazon.core.settings import settings
 from pymazon.core.downloader import Downloader
-
-
-gtk.gdk.threads_init()
 
 
 class ProgressRenderer(gtk.CellRendererProgress):
@@ -27,6 +25,104 @@ class ProgressRenderer(gtk.CellRendererProgress):
 gobject.type_register(ProgressRenderer)
 
 
+class NameFormatDialog(gobject.GObject):
+    def __init__(self, builder):
+        self.nameFormatDialog = builder.get_object('nameFormatDialog')
+        self.nameFormatDialog.set_modal(True)
+        self.nameFormatText = builder.get_object('nameFormatText')
+        self.connect_signals(builder)
+        
+    def connect_signals(self, builder):
+        nameFormatOkButton = builder.get_object('nameFormatOkButton')
+        nameFormatOkButton.connect('clicked', self.on_nameFormatOkButton_clicked)
+        nameFormatCancelButton = builder.get_object('nameFormatCancelButton')
+        nameFormatCancelButton.connect('clicked', self.on_nameFormatCancelButton_clicked)
+    
+    def on_nameFormatOkButton_clicked(self, *args):
+        self.nameFormatDialog.emit('response', 1)     
+    
+    def on_nameFormatCancelButton_clicked(self, *args):
+        self.nameFormatDialog.emit('response', 0)
+
+    def launch(self):
+        self.nameFormatText.set_text(settings.name_template)
+        if self.nameFormatDialog.run():
+            txt = self.nameFormatText.get_text()
+        else:
+            txt = None
+        self.nameFormatDialog.hide()
+        return txt
+        
+    
+class SettingsDialog(gobject.GObject):
+    def __init__(self, builder):
+        self.settingsDialog = builder.get_object('settingsDialog')        
+        self.settingsDialog.set_modal(True)        
+        self.nameFormatDialog = NameFormatDialog(builder)
+        self.nameFormatLineEdit = builder.get_object('nameFormatLineEdit')
+        self.saveDirLineEdit = builder.get_object('saveDirLineEdit')
+        self.toolkitComboBox = builder.get_object('toolkitComboBox')
+        self.numThreadsSpinBox = builder.get_object('numThreadsSpinBox')
+        self.connect_signals(builder)
+        
+    def connect_signals(self, builder):
+        settingsOkButton = builder.get_object('settingsOkButton')
+        settingsOkButton.connect('clicked', self.on_settingsOkButton_clicked)
+        settingsCancelButton = builder.get_object('settingsCancelButton')
+        settingsCancelButton.connect('clicked', self.on_settingsCancelButton_clicked)
+        saveDirButton = builder.get_object('saveDirButton')
+        saveDirButton.connect('clicked', self.on_saveDirButton_clicked)
+        nameFormatButton = builder.get_object('nameFormatButton')
+        nameFormatButton.connect('clicked', self.on_nameFormatButton_clicked)        
+        
+    def on_settingsOkButton_clicked(self, *args):
+        self.settingsDialog.emit('response', 1)   
+        
+    def on_settingsCancelButton_clicked(self, *args):
+        self.settingsDialog.emit('response', 0)
+    
+    def on_saveDirButton_clicked(self, *args):
+        caption = 'Choose Save Directory'              
+        dialog = gtk.FileChooserDialog(caption, self.settingsDialog,                                       
+                                       buttons=(gtk.STOCK_CANCEL,
+                                                gtk.RESPONSE_REJECT,
+                                                gtk.STOCK_OK,
+                                                gtk.RESPONSE_ACCEPT))
+        dialog.set_action(gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER)
+        dialog.set_current_folder(settings.save_dir)
+        res = dialog.run()
+        new_dir = dialog.get_current_folder()
+        dialog.destroy()
+        if res == gtk.RESPONSE_REJECT:
+            return        
+        self.saveDirLineEdit.set_text(new_dir)
+        
+    def on_nameFormatButton_clicked(self, *args):
+        new_format = self.nameFormatDialog.launch()        
+        if new_format:            
+            self.nameFormatLineEdit.set_text(new_format)
+        
+    def set_combo_box(self):
+        # this is currently exremely hackish
+        toolkits = {'qt4': 0, 'gtk': 1}
+        idx = toolkits[settings.toolkit]
+        self.toolkitComboBox.set_active(idx)
+        
+    def launch(self):
+        self.saveDirLineEdit.set_text(settings.save_dir)
+        self.nameFormatLineEdit.set_text(settings.name_template)
+        self.set_combo_box()
+        self.numThreadsSpinBox.set_value(settings.num_threads)
+        if self.settingsDialog.run():
+            settings.save_dir = self.saveDirLineEdit.get_text()
+            settings.name_template = self.nameFormatLineEdit.get_text()
+            settings.toolkit = self.toolkitComboBox.get_active_text()
+            settings.num_threads = self.numThreadsSpinBox.get_value()
+            settings.write_config_file()
+        self.settingsDialog.hide()
+            
+        
+        
 class MainWindow(gobject.GObject):    
     def __init__(self, amzs):
         glade_fpath = os.path.join(os.path.split(__file__)[0], '_ui.glade')
@@ -40,12 +136,13 @@ class MainWindow(gobject.GObject):
         self.pymazon_text = '<span weight="bold" size="xx-large">Pymazon! w00t!</span>'
         self.reset_displaybar_info()        
         
-        self.main_window = builder.get_object('MainWindow')        
-        self.main_window.show()        
+        self.settings_dialog = SettingsDialog(builder)
+        
+        self.mainWindow = builder.get_object('MainWindow')        
+        self.mainWindow.show()        
 
         self.treeView = builder.get_object('treeView')
-        self.tree_model = None        
-   
+        self.tree_model = None 
         
         self.pbarRenderer = ProgressRenderer()       
         self.colStatus = builder.get_object('colStatus')
@@ -55,7 +152,8 @@ class MainWindow(gobject.GObject):
         self.colStatus.add_attribute(self.pbarRenderer, 'text', 2)
         
         self.downloader = None
-        
+        self.current_album = None
+        self.old_albums = []
         if amzs:
             self.load_new_amz_files(amzs)
         
@@ -72,9 +170,8 @@ class MainWindow(gobject.GObject):
         self.actionDownload = builder.get_object('actionDownload')
         self.actionDownload.connect('activate', self.on_actionDownload_activate)      
         self.actionQuit = builder.get_object('actionQuit')
-        self.actionQuit.connect('activate', self.on_destroy)
+        self.actionQuit.connect('activate', self.on_destroy)        
         
-
     def on_actionAbout_activate(self, *args):
         webbrowser.open('http://code.google.com/p/pymazon')
 
@@ -82,7 +179,7 @@ class MainWindow(gobject.GObject):
         self.new_amz()
 
     def on_actionSettings_activate(self, *args):
-        print 'preferences'
+        self.settings_dialog.launch()
 
     def on_actionShowDownloads_activate(self, *args):
         webbrowser.open(settings.save_dir)
@@ -93,17 +190,13 @@ class MainWindow(gobject.GObject):
     def on_destroy(self, *arg):
         if self.downloader:
             self.downloader.kill()
-        gtk.main_quit()
-
-    def reset_displaybar_info(self):
-        self.albumArtImage.set_from_pixbuf(self.pythonPixbuf)
-        self.nowDownloadingLabel.set_markup(self.pymazon_text)
+        gtk.main_quit()    
 
     def new_amz(self):
         caption = 'Choose AMZ File'
         filefilter = gtk.FileFilter()        
         filefilter.add_pattern('*.amz')        
-        dialog = gtk.FileChooserDialog(caption, self.main_window,                                       
+        dialog = gtk.FileChooserDialog(caption, self.mainWindow,                                       
                                        buttons=(gtk.STOCK_CANCEL,
                                                 gtk.RESPONSE_REJECT,
                                                 gtk.STOCK_OK,
@@ -136,7 +229,7 @@ class MainWindow(gobject.GObject):
             print 'here'
             msg = 'No write access to save directory. '
             msg += 'Choose a new directory with write privileges.'
-            dialog = gtk.MessageDialog(self.main_window, 
+            dialog = gtk.MessageDialog(self.mainWindow, 
                                        buttons=gtk.BUTTONS_OK)
             dialog.set_markup(msg)
             dialog.run()
@@ -150,6 +243,14 @@ class MainWindow(gobject.GObject):
         self.downloader.start()            
 
     def update_cb(self, node):
+        if isinstance(node.elem.obj, Album):
+            if not node.elem.obj is self.current_album:
+                if node.elem.obj not in self.old_albums:
+                    self.old_albums.append(node.elem.obj)
+                    self.current_album = node.elem.obj
+                    self.update_album_info()
+                else:
+                    pass     
         self.tree_model.update_node(node)
     
     def finished_cb(self):
@@ -158,8 +259,36 @@ class MainWindow(gobject.GObject):
         self.actionDownload.set_sensitive(True)
         self.actionSettings.set_sensitive(True)
         self.actionLoadFiles.set_sensitive(True)
+        
+    def reset_displaybar_info(self):
+        self.current_album = None
+        self.old_albums = []        
+        self.albumArtImage.set_from_pixbuf(self.pythonPixbuf)
+        self.nowDownloadingLabel.set_markup(self.pymazon_text)
+        
+    def update_album_info(self):
+        self.update_album_art()
+        self.update_downloading_text()
+        
+    def update_album_art(self):
+        img = self.current_album.image
+        loader = gtk.gdk.PixbufLoader()
+        loader.write(img)
+        loader.close()
+        pb = loader.get_pixbuf()
+        self.albumArtImage.set_from_pixbuf(pb)
+        self.update_downloading_text()
+        
+    def update_downloading_text(self):
+        name = self.current_album.artist
+        title = self.current_album.title
+        txt = 'Now dowloading <b>%s</b> by <b>%s</b>' % (title, name)
+        self.nowDownloadingLabel.set_markup(txt)
+        
     
-    def start(self):        
-        gtk.gdk.threads_enter()    
-        gtk.main()
-        gtk.gdk.threads_leave()
+def main(amzs):
+    gtk.gdk.threads_init()
+    main_window = MainWindow(amzs)
+    gtk.gdk.threads_enter()    
+    gtk.main()
+    gtk.gdk.threads_leave()

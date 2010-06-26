@@ -19,176 +19,48 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
 import sys
-
 #for dev only
 sys.path.append('/home/brucewayne/development/pymazon/hg')
-from optparse import OptionParser
+
+from pymazon.core.options import parse_options
 from pymazon.core.settings import settings
 from pymazon.util.log_util import PymazonLogger
 
 
 logger = PymazonLogger('main')
-
-
-def run_command_line(amzs):
-    from pymazon.core.parser import AmzParser
-    from pymazon.core.downloader import Downloader
-    from pymazon.core.tree_model import TreeModel
-    from pymazon.core.item_model import Track
     
-    save_dir = settings.save_dir
-    if not os.access(save_dir, os.W_OK):
-        msg = ('Unable to write to target directory %s. '
-               'Ensure the directory exits and write '
-               'permission is granted.' % save_dir)
-        raise IOError(msg)
-    
-    parser = AmzParser()
-    for f in amzs:
-        parser.parse(f)
-    objects = parser.get_parsed_objects()        
-    tree_model = TreeModel()
-    tree_model.create_tree(objects)    
 
-    print '\nFiles will be saved to %s' % save_dir
-    print 'with the name format %s\n' % settings.name_template
-        
-    def dl_printer(node, current_node=[None]):
-        if isinstance(node.elem.obj, Track):
-            if node is current_node[-1]:
-                sys.stdout.write('.')
-                sys.stdout.flush()
-            else:
-                current_node.append(node)
-                print '    %s' % unicode(node.elem.obj)
-           
-    def finished_cb():
-        print 'All downloads complete!'
-
-    settings.num_threads = 1 # until we get a better dl_printer
-    dl = Downloader(tree_model, dl_printer, finished_cb)
-    dl.start()
-    dl.join()
-
-
-def parse_options():    
-    parser = OptionParser()
-    parser.add_option('-d', '--dir', dest='save_dir',
-                      help='Directory in which to save the downloads. '
-                           'Defaults to current working directory.')
-    parser.add_option('-c', '--command-line', dest='command_line',
-                      help='Run Pymazon as a command line script. '
-                           'If this option is used, it must be accompanied '
-                           'by a path to one or more .amz files as a positional '
-                           'argument.',
-                      action='store_true', default=False)
-    parser.add_option('-s', '--save-name-format', dest='fmt', help=\
-'''A format string to tell Pymazon how to format the mp3 file names.
-The default format is '${tracknum} - ${title}' which will generate a file
-of the name '1 - foosong.mp3' for example. Valid tags are:
-
-    ${tracknum}
-    ${title}
-    ${artist}
-    ${album}
-
-and can appear in any order.
-
-The format given on the command line MUST be surrounded in single quotes:
-$ pymazon --save-name-format='${tracknum} - ${artist} - ${title}'
-
-or
-
-$ pymazon -s '${tracknum} - ${artist} - ${title}'
-
-This formatting command is flexible. For example, say you have a music folder
-at ~/Music and you want to download the new Ludovico Einaudi album Nightbook.
-And, let's say that you want your directory structure to look like this at the
-end: ~/Music/Ludovico Einaudi/Nightbook/1 - song.mp3
-Then, assuming ~/foo.amz is the path to the AMZ file, use the following
-command:
-
-As a command line script:
-$ pymazon -c -d ~/Music -s '${artist}/${album}/${tracknum} - ${title}' ~/foo.amz
-
-Or launch the gui ready-to-go with:
-$ pymazon -d ~/Music -s '${artist}/${album}/${tracknum} - ${title}' ~/foo.amz
-
-''', default='')
-    parser.add_option('-g', '--gui-toolkit', dest='toolkit',
-                      help='Specify which gui toolkit to use. '
-                           'Valid options are: "qt4" and "gtk". '
-                           'Default is qt4.')
-    parser.add_option('-n', '--num-threads', dest='num_threads',
-                      help='Specify the number of threads for use in the '
-                           'downloader. i.e. the number of simultaneous '
-                           'downloads. When using the command line interfaces, '
-                           'the number of threads is always 1.')
-
-    return parser.parse_args()
-  
-
-def validate_args(args):
-    # validates that the only positional args are valid .amz files
-    for arg in args:
-        if not arg.endswith('.amz'):
-            raise ValueError('Positional arguments must be .amz files.')        
-        if not os.path.isfile(arg):
-            raise ValueError('AMZ file %s does not exist. Please check the path '
-                             'and try again.' % arg)       
-    return args
-
-
-def main():
-    
-    options, args = parse_options()    
-    
-    if options.save_dir:
-        settings.save_dir = options.save_dir        
-    if options.fmt:
-        settings.name_template = options.fmt
-    if options.toolkit:
-        settings.toolkit = options.toolkit
-    if options.num_threads:
-        settings.num_threads = options.num_threads
-
-    amzs = validate_args(args)
-    
-    if options.command_line:
-        run_command_line(amzs)
-    else:
-        toolkit = settings.toolkit
-        if toolkit == 'qt4':
-            try:
-                from pymazon.qt.ui import MainWindow
-                from PyQt4.QtGui import QApplication
-                app = QApplication([])
-                win = MainWindow(amzs)
-                win.show()                
-                app.exec_()
-            except ImportError, e:
-                print e
-                msg = ('Unable to import PyQt4. You can still use Pymazon '
-                       'via the commmand line with the -c switch. '
-                       'Type `pymazon --help` for more info.')
-                raise ImportError(msg)
-        elif toolkit == 'gtk':
-            try:
-                from pymazon.gtk.ui import MainWindow
-                import gtk
-                app = MainWindow(amzs)
-                app.start()
-            except ImportError:
-                msg = ('Unable to import PyGtk. You can still use Pymazon '
-                       'via the commmand line with the -c switch. '
-                       'Type `pymazon --help` for more info.')
-                raise ImportError(msg)
-        else:
-            msg = ('Unable to import PyQt4 or PyGtk. One of which is '
-                   'required to run Pymazon. You can still use Pymazon '
+def main():    
+    entry, amzs = parse_options()   
+    if entry == 'cmd':
+        if not amzs:
+            raise ValueError('No .amz files specified.')
+        from pymazon.cmd.ui import main
+        main(amzs)
+    elif entry == 'qt4':
+        try:
+            from pymazon.qt.ui import main
+            main(amzs)
+        except ImportError, e:
+            print e
+            msg = ('Unable to import PyQt4. You can still use Pymazon '
                    'via the commmand line with the -c switch. '
                    'Type `pymazon --help` for more info.')
             raise ImportError(msg)
+    elif entry == 'gtk':
+        try:
+            from pymazon.gtk.ui import main
+            main(amzs)
+        except ImportError:
+            msg = ('Unable to import PyGtk. You can still use Pymazon '
+                   'via the commmand line with the -c switch. '
+                   'Type `pymazon --help` for more info.')
+            raise ImportError(msg)
+    else:
+        msg = ('Invalid backend specified. Pymazon can be used from '
+               'the command line, pyqt4, or pygtk. '
+               'Type `pymazon --help` for more info.')
+        raise ValueError(msg)
         
         
 if __name__=='__main__':
