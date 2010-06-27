@@ -40,21 +40,25 @@ class InstallScripts(install_scripts):
 
 
 setup(name='Pymazon',
-      version='0.1.1',
+      version='0.9',
       description='Python Based Downloader for the Amazon mp3 Store',
       author='S. Chris Colbert',
       author_email='sccolbert@gmail.com',
       url='http://code.google.com/p/pymazon/',
-      packages=['pymazon'],
-      package_data={'pymazon':['_gtkgui.gtk', '_qtgui.ui', '_qtfmtdialog.ui']},
+      package_dir = {'pymazon': './pymazon'},
+      packages=['pymazon', 'pymazon.core', 'pymazon.qt', 'pymazon.gtk',
+                'pymazon.qt', 'pymazon.resource', 'pymazon.util'],
+      package_data={'pymazon.resource': ['icons/*.png'],
+                    'pymazon.qt': ['*.ui'],
+                    'pymazon.gtk': ['*.glade']},
       scripts=['./bin/pymazon'],
       license='GPLv3',
       long_description=\
 '''Pymazon is a Python implemented alternative to the Amazon mp3 downloader.
 It allows you to download legally purchased mp3's from the Amazon mp3 store
 using the .amz file provided by Amazon after the purchase. Pymazon can be
-used as both a command line client or a gui (if PyQt4 is installed). The
-only hard external dependency is PyCrypto, which is available in the
+used as both a command line client or a gui (if PyQt4 or PyGtk is installed). 
+The only hard external dependency is PyCrypto, which is available in the
 Ubuntu (and likely other distro's) repositories (python-crypto),
 and the cheese shop.''',
       cmdclass={'install_scripts': InstallScripts},

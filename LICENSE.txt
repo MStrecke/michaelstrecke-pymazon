@@ -1,5 +1,5 @@
 Pymazon - A Python based downloader for the Amazon.com MP3 store
-Copyright (c) 2009 Steven C. Colbert
+Copyright (c) 2010 Steven C. Colbert
 
 Pymazon is licensed under the GPL Version 3. The text of which follows:
 

@@ -1,5 +1,18 @@
 Pymazon Changelog
 
+0.9
+---
+- Rewrite of the codebase with greater granularity and separatation.
+- New tree model.
+- Support for multimedia downloads (digital booklets and videos attached to albums).
+- New expat based parser.
+- New cmd line layout.
+- New GUI layout to more closely match the official amazon downloader.
+- New settings dialogs for easier configuration.
+- Synchronization between the config file and settings dialogs.
+- Gtk GUI now identical (by and large) to the Qt GUI. Gtk is no longer
+  a second class citizen.
+  
 0.1.1
 -----
 - Added support for command line options and configuration file
