@@ -65,7 +65,7 @@ class CommandLineRunner(object):
         for line in self.get_printable_download_list():
             print line
         print
-        print 'Would you like to download these items? (Yes/No)'
+        print 'Download these items? (Yes/No)'
         res = raw_input()
         if res in ['Yes', 'Y', 'y', 'yes', 'YES']:
             self.download_tracks()
