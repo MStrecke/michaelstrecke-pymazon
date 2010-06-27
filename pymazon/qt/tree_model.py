@@ -1,6 +1,6 @@
 """
 Pymazon - A Python based downloader for the Amazon.com MP3 store
-Copyright (c) 2009 Steven C. Colbert
+Copyright (c) 2010 Steven C. Colbert
 
 This program is free software: you can redistribute it and/or
 modify it under the terms of the GNU General Public License as
@@ -16,7 +16,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from PyQt4.QtCore import QAbstractItemModel, QModelIndex, Qt 
+from PyQt4.QtCore import QAbstractItemModel, QModelIndex, Qt
+
 from pymazon.core.tree_model import TreeModel as PymazonTreeModel
     
     

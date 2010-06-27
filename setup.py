@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 Pymazon - A Python based downloader for the Amazon.com MP3 store
-Copyright (c) 2009 Steven C. Colbert
+Copyright (c) 2010 Steven C. Colbert
 
 This program is free software: you can redistribute it and/or
 modify it under the terms of the GNU General Public License as
@@ -17,8 +17,8 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from distutils.core import setup
 from distutils.command.install_scripts import install_scripts
+from distutils.core import setup
 
 
 class InstallScripts(install_scripts):
@@ -47,7 +47,8 @@ setup(name='Pymazon',
       url='http://code.google.com/p/pymazon/',
       package_dir = {'pymazon': './pymazon'},
       packages=['pymazon', 'pymazon.core', 'pymazon.qt', 'pymazon.gtk',
-                'pymazon.qt', 'pymazon.resource', 'pymazon.util'],
+                'pymazon.qt', 'pymazon.resource', 'pymazon.util',
+                'pymazon.cmd'],
       package_data={'pymazon.resource': ['icons/*.png'],
                     'pymazon.qt': ['*.ui'],
                     'pymazon.gtk': ['*.glade']},

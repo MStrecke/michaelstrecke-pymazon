@@ -1,18 +1,35 @@
+"""
+Pymazon - A Python based downloader for the Amazon.com MP3 store
+Copyright (c) 2010 Steven C. Colbert
+
+This program is free software: you can redistribute it and/or
+modify it under the terms of the GNU General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <http://www.gnu.org/licenses/>.
+"""
+
+import os
+import webbrowser
+
 import pygtk
 pygtk.require('2.0')
 import gobject
 import gtk
-import webbrowser
-import os
-import sys
-sys.path.append('/home/brucewayne/development/pymazon/hg')
 
-from pymazon.resource import python_icon_path
-from pymazon.gtk.tree_model import TreeModel
+from pymazon.core.downloader import Downloader
 from pymazon.core.item_model import Album
 from pymazon.core.parser import AmzParser
 from pymazon.core.settings import settings
-from pymazon.core.downloader import Downloader
+from pymazon.gtk.tree_model import TreeModel
+from pymazon.resource import python_icon_path
 
 
 class ProgressRenderer(gtk.CellRendererProgress):
@@ -94,7 +111,17 @@ class SettingsDialog(gobject.GObject):
         new_dir = dialog.get_current_folder()
         dialog.destroy()
         if res == gtk.RESPONSE_REJECT:
-            return        
+            return
+        if not os.access(new_dir, os.W_OK):
+            msg = 'No write access to specified directory. '
+            msg += 'Try again.'
+            dialog = gtk.MessageDialog(self.settingsDialog, 
+                                       buttons=gtk.BUTTONS_OK)
+            dialog.set_markup(msg)
+            dialog.run()
+            dialog.destroy()
+            self.on_saveDirButton_clicked()
+            return
         self.saveDirLineEdit.set_text(new_dir)
         
     def on_nameFormatButton_clicked(self, *args):
@@ -103,7 +130,7 @@ class SettingsDialog(gobject.GObject):
             self.nameFormatLineEdit.set_text(new_format)
         
     def set_combo_box(self):
-        # this is currently exremely hackish
+        # this is currently extremely hackish
         toolkits = {'qt4': 0, 'gtk': 1}
         idx = toolkits[settings.toolkit]
         self.toolkitComboBox.set_active(idx)
@@ -119,27 +146,25 @@ class SettingsDialog(gobject.GObject):
             settings.toolkit = self.toolkitComboBox.get_active_text()
             settings.num_threads = self.numThreadsSpinBox.get_value()
             settings.write_config_file()
-        self.settingsDialog.hide()
-            
+        self.settingsDialog.hide()            
         
         
 class MainWindow(gobject.GObject):    
     def __init__(self, amzs):
         glade_fpath = os.path.join(os.path.split(__file__)[0], '_ui.glade')
         builder = gtk.Builder()
-        builder.add_from_file(glade_fpath)
-        self.connect_signals(builder)       
+        builder.add_from_file(glade_fpath)            
         
+        self.mainWindow = builder.get_object('MainWindow')
+        self.mainWindow.show()
+          
         self.albumArtImage = builder.get_object('albumArtImage')
         self.nowDownloadingLabel = builder.get_object('nowDownloadingLabel')
         self.pythonPixbuf = gtk.gdk.pixbuf_new_from_file(python_icon_path)
         self.pymazon_text = '<span weight="bold" size="xx-large">Pymazon! w00t!</span>'
         self.reset_displaybar_info()        
         
-        self.settings_dialog = SettingsDialog(builder)
-        
-        self.mainWindow = builder.get_object('MainWindow')        
-        self.mainWindow.show()        
+        self.settings_dialog = SettingsDialog(builder)             
 
         self.treeView = builder.get_object('treeView')
         self.tree_model = None 
@@ -150,6 +175,8 @@ class MainWindow(gobject.GObject):
         self.colStatus.pack_start(self.pbarRenderer, True)
         self.colStatus.add_attribute(self.pbarRenderer, 'value', 1)
         self.colStatus.add_attribute(self.pbarRenderer, 'text', 2)
+        
+        self.connect_signals(builder)
         
         self.downloader = None
         self.current_album = None

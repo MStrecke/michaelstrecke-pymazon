@@ -1,6 +1,6 @@
 """
 Pymazon - A Python based downloader for the Amazon.com MP3 store
-Copyright (c) 2009 Steven C. Colbert
+Copyright (c) 2010 Steven C. Colbert
 
 This program is free software: you can redistribute it and/or
 modify it under the terms of the GNU General Public License as
@@ -17,7 +17,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
 import os
-
 from optparse import OptionParser
 
 from pymazon.core.settings import settings
@@ -87,7 +86,6 @@ $ pymazon -d ~/Music -s '${artist}/${album}/${tracknum} - ${title}' ~/foo.amz
                            'downloader. i.e. the number of simultaneous '
                            'downloads. When using the command line interfaces, '
                            'the number of threads is always 1.')
-
    
     options, args = parser.parse_args()    
     

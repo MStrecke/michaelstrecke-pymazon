@@ -5,6 +5,8 @@ README.txt
 setup.py
 ./bin/pymazon
 ./pymazon/__init__.py
+./pymazon/cmd/__init__.py
+./pymazon/cmd/ui.py
 ./pymazon/core/__init__.py
 ./pymazon/core/decryptor.py
 ./pymazon/core/downloader.py
@@ -14,8 +16,6 @@ setup.py
 ./pymazon/core/settings.py
 ./pymazon/core/tree_model.py
 ./pymazon/gtk/__init__.py
-./pymazon/gtk/gtkgui.py
-./pymazon/gtk/tester.py
 ./pymazon/gtk/tree_model.py
 ./pymazon/gtk/ui.py
 ./pymazon/qt/__init__.py

@@ -1,6 +1,6 @@
 """
 Pymazon - A Python based downloader for the Amazon.com MP3 store
-Copyright (c) 2009 Steven C. Colbert
+Copyright (c) 2010 Steven C. Colbert
 
 This program is free software: you can redistribute it and/or
 modify it under the terms of the GNU General Public License as
@@ -18,16 +18,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import os
 import webbrowser
 
+from PyQt4.QtCore import Qt, pyqtSignal, pyqtSlot   
 from PyQt4.QtGui import QDialog, QStyledItemDelegate, QMainWindow, QFileDialog,\
                         QMessageBox, QIcon, QPixmap, QApplication, QStyle,\
-                        QStyleOptionProgressBar
-from PyQt4.QtCore import Qt, pyqtSignal, pyqtSlot                         
+                        QStyleOptionProgressBar                      
 
-from pymazon.qt import _ui, _nameformatdialog, _settingsdialog
-from pymazon.core.parser import AmzParser
 from pymazon.core.downloader import Downloader
 from pymazon.core.item_model import Album
+from pymazon.core.parser import AmzParser
 from pymazon.core.settings import settings
+from pymazon.qt import _ui, _nameformatdialog, _settingsdialog
 from pymazon.qt.tree_model import TreeModel
 from pymazon.resource import load_icon_path, download_icon_path,\
                              exit_icon_path, settings_icon_path,\
@@ -135,15 +135,15 @@ class MainWindow(QMainWindow, _ui.Ui_MainWindow):
         self.tree_model = None        
         self.pbardelegate = ProgressBarDelegate()
         self.treeView.setItemDelegateForColumn(1, self.pbardelegate)
-
-        if amz_files:
-            self.load_new_amz_files(amz_files)
-            
+        
         self.downloader = None
         self.current_album = None
         self.old_albums = []
         self.updateInfo.connect(self.update_album_info)
-        self.resetInfo.connect(self.reset_displaybar_info)        
+        self.resetInfo.connect(self.reset_displaybar_info) 
+        
+        if amz_files:
+            self.load_new_amz_files(amz_files)               
         
     @pyqtSlot()
     def on_actionLoadFiles_triggered(self):

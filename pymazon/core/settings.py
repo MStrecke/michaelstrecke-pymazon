@@ -1,6 +1,6 @@
 """
 Pymazon - A Python based downloader for the Amazon.com MP3 store
-Copyright (c) 2009 Steven C. Colbert
+Copyright (c) 2010 Steven C. Colbert
 
 This program is free software: you can redistribute it and/or
 modify it under the terms of the GNU General Public License as
@@ -16,10 +16,11 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
+from ConfigParser import ConfigParser, NoOptionError, NoSectionError
 import os
 import sys
 import warnings
-from ConfigParser import ConfigParser, NoOptionError, NoSectionError
+
 
 def pymazon_showwarning(message, category, *args):
     print 'Warning:'
@@ -49,10 +50,24 @@ def _get_pymazon_dir():
                'access is granted. Then, restart Pymazon.' % pymazon_dir)
         sys.exit(0)
         
+
+def _get_default_toolkit():
+    # try qt first, then gtk, if neither, use qt
+    try:
+        import PyQt4
+        toolkit = 'qt4'
+    except ImportError:
+        try:
+            import pygtk
+            toolkit = 'gtk'
+        except ImportError:
+            toolkit = 'qt4'
+    return toolkit
+
         
-#-------------------------------------------------------------------------------
+#------------------------------------------------------------------------------
 # Program-wide settings Class 
-#-------------------------------------------------------------------------------
+#------------------------------------------------------------------------------
 
 class PymazonSettingsError(Exception):
     pass
@@ -65,7 +80,7 @@ class _PymazonSettings(object):
         self._config_file =  os.path.join(self._pymazon_dir, 'pymazonrc')
         self._save_dir = os.environ.get('XDG_MUSIC_DIR', os.getcwd())
         self._name_template = '${tracknum} - ${title}'
-        self._toolkit = 'qt4'
+        self._toolkit = None # will be figured out in read/write_config_file
         self._num_threads = 1 
         self._read_config_file()
         
@@ -86,7 +101,7 @@ class _PymazonSettings(object):
         return self._name_template
     
     def _set_name_template(self, value):
-        template_string = str(value)
+        template_string = str(value).lstrip(os.path.sep)
         self._name_template = template_string
         
     name_template = property(_get_name_template, _set_name_template)
@@ -117,6 +132,9 @@ class _PymazonSettings(object):
     num_threads = property(_get_num_threads, _set_num_threads)
     
     def write_config_file(self):
+        # don't do unnecessary imports if the user already has a config file.
+        if self._toolkit is None:
+            self._toolkit = _get_default_toolkit()
         cp = '''\
 [config]
 save_dir = %s

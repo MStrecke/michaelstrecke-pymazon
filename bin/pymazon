@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
 Pymazon - A Python based downloader for the Amazon.com MP3 store
-Copyright (c) 2009 Steven C. Colbert
+Copyright (c) 2010 Steven C. Colbert
 
 This program is free software: you can redistribute it and/or
 modify it under the terms of the GNU General Public License as
@@ -19,8 +19,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
 import sys
-#for dev only
-sys.path.append('/home/brucewayne/development/pymazon/hg')
 
 from pymazon.core.options import parse_options
 from pymazon.core.settings import settings
@@ -33,7 +31,7 @@ logger = PymazonLogger('main')
 def main():    
     entry, amzs = parse_options()   
     if entry == 'cmd':
-        if not amzs:
+        if not amzs:            
             raise ValueError('No .amz files specified.')
         from pymazon.cmd.ui import main
         main(amzs)
@@ -42,7 +40,7 @@ def main():
             from pymazon.qt.ui import main
             main(amzs)
         except ImportError, e:
-            print e
+            logger.error(e)
             msg = ('Unable to import PyQt4. You can still use Pymazon '
                    'via the commmand line with the -c switch. '
                    'Type `pymazon --help` for more info.')
@@ -51,7 +49,8 @@ def main():
         try:
             from pymazon.gtk.ui import main
             main(amzs)
-        except ImportError:
+        except ImportError, e:
+            logger.error(e)
             msg = ('Unable to import PyGtk. You can still use Pymazon '
                    'via the commmand line with the -c switch. '
                    'Type `pymazon --help` for more info.')

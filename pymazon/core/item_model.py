@@ -1,6 +1,6 @@
 """
 Pymazon - A Python based downloader for the Amazon.com MP3 store
-Copyright (c) 2009 Steven C. Colbert
+Copyright (c) 2010 Steven C. Colbert
 
 This program is free software: you can redistribute it and/or
 modify it under the terms of the GNU General Public License as
@@ -61,7 +61,7 @@ class Downloadable(HasStatus):
         super(Downloadable, self).__init__()
         self.url = url       
         
-    def _safe_save_name(self, fname):
+    def _safe_save_name(self, fname):        
         # ensure we don't overwrite any files
         i = 1
         nfname = fname
@@ -121,9 +121,9 @@ class Track(Downloadable):
         sn = template.safe_substitute(artist=self.album.artist, 
                                       title=self.title,
                                       tracknum=self.number,
-                                      album=self.album.title)
+                                      album=self.album.title)        
         
-        save_path = os.path.join(settings.save_dir, sn + '.' + self.extension)       
+        save_path = os.path.join(settings.save_dir, sn + '.' + self.extension)        
         super(Track, self).save(save_path, data)        
     
     def __unicode__(self):

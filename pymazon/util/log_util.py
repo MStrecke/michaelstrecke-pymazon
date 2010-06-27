@@ -1,6 +1,6 @@
 """
 Pymazon - A Python based downloader for the Amazon.com MP3 store
-Copyright (c) 2009 Steven C. Colbert
+Copyright (c) 2010 Steven C. Colbert
 
 This program is free software: you can redistribute it and/or
 modify it under the terms of the GNU General Public License as
@@ -16,9 +16,10 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import os
+import datetime
 import logging
-from datetime import datetime
+import os
+
 from pymazon.core.settings import settings
     
 
@@ -64,7 +65,7 @@ class PymazonLogger(object):
         # this name filename should be unique unless you start
         # multiple instances of pymazon at exactly the same second
         # which is highly unlikely.
-        today = datetime.today().strftime('pymazon_error_log_%d_%m_%y_%H_%M_%S')
+        today = datetime.datetime.today().strftime('pymazon_error_log_%d_%m_%y_%H_%M_%S')
         cls.log_filename = os.path.join(cls.log_dir, today + '.txt')
                         
         fmt = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
