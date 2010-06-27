@@ -57,7 +57,8 @@ class CommandLineRunner(object):
     def __init__(self, amzs):
         self.tree_model = None
         self.downloader = None        
-        self.current_node = None        
+        self.current_node = None
+        self.tab = '    '
         self.load_new_amz_files(amzs)        
         
     def run(self):
@@ -107,7 +108,9 @@ class CommandLineRunner(object):
             raise IOError(msg)        
         
         self.downloader = Downloader(self.tree_model, self.update_cb, 
-                                     self.finished_cb)             
+                                     self.finished_cb)
+        print 
+        print '##############################################'
         self.downloader.start()
         self.downloader.join()     
 
@@ -115,11 +118,10 @@ class CommandLineRunner(object):
         if not self.tree_model:
             return
         root_nodes = self.tree_model.get_root_nodes()
-        tab = '    '
         lines = []
         def add_lines(node, ntabs):
             txt = node.elem.data()
-            lines.append(ntabs * tab + txt)
+            lines.append(ntabs * self.tab + txt)
             for snode in node.subnodes:
                 add_lines(snode, ntabs+1)
         for node in root_nodes:
