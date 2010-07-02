@@ -41,6 +41,9 @@ class AmzParser(object):
         self.now_tracknum = False
         self.now_filesize = False
         self.now_tracktype = False
+        self.now_genre = False
+        self.now_discnum = False
+        self.now_albumartist = False
     
     def start_element(self, name, attrs):
         if name == 'trackList':
@@ -64,7 +67,13 @@ class AmzParser(object):
                 if attrs['rel'].endswith('fileSize'):
                     self.now_filesize = True
                 elif attrs['rel'].endswith('trackType'):
-                    self.now_tracktype = True                         
+                    self.now_tracktype = True
+                elif attrs['rel'].endswith('primaryGenre'):
+                    self.now_genre = True
+                elif attrs['rel'].endswith('albumPrimaryArtist'):
+                    self.now_albumartist = True
+                elif attrs['rel'].endswith('discNum'):
+                    self.now_discnum = True
     
     def end_element(self, name):
         if name == 'trackList':
@@ -89,6 +98,12 @@ class AmzParser(object):
                     self.now_filesize = False
                 elif self.now_tracktype:
                     self.now_tracktype = False
+                elif self.now_discnum:
+                    self.now_discnum = False
+                elif self.now_genre:
+                    self.now_genre = False
+                elif self.now_albumartist:
+                    self.now_albumartist = False
     
     def character_data(self, data):        
         if self.now_url:
@@ -102,32 +117,41 @@ class AmzParser(object):
         elif self.now_image:
             self.current_track['image'] += data
         elif self.now_tracknum:
-            self.current_track['tracknum'] += data
+            self.current_track['tracknum'] += ('0' + data if len(data) == 1 else data)
         elif self.now_filesize:
             self.current_track['filesize'] += data
         elif self.now_tracktype:
             self.current_track['tracktype'] += data
+        elif self.now_discnum:
+            self.current_track['discnum'] += ('0' + data if len(data) == 1 else data)
+        elif self.now_genre:
+            self.current_track['genre'] += data
+        elif self.now_albumartist:
+            self.current_track['albumartist'] += data
         
     def add_track(self):
         album = self.current_track['album']
-        artist = self.current_track['artist']
+        album_artist = self.current_track['albumartist']
         # if the current track does not share the same artist 
         # and album name as any existing album, create a new album.
         for obj in self.parsed_objects:
             if isinstance(obj, Album):                
-                if (obj.title == album) and (obj.artist == artist):
+                if (obj.title == album) and (obj.artist == album_artist):
                     self.add_track_to_album(obj)
                     return        
         new_album = Album(title=album,
-                          artist=artist,
+                          artist=album_artist,
                           image_url=self.current_track['image'])
         self.add_track_to_album(new_album)
         self.parsed_objects.append(new_album)
                     
     def add_track_to_album(self, album):
         new_track = Track(title=self.current_track['title'],
+                          artist=self.current_track['artist'],
                           url=self.current_track['url'],
                           album=album,
+                          genre=self.current_track['genre'],
+                          discnum=self.current_track['discnum'],
                           number=self.current_track['tracknum'],
                           filesize=self.current_track['filesize'],
                           extension=self.current_track['tracktype'])

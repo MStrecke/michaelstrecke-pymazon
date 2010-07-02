@@ -104,12 +104,15 @@ class Album(HasStatus):
     
 
 class Track(Downloadable):
-    def __init__(self, album, title=None, number=None, url=None, filesize=None, 
-                 extension=None):
+    def __init__(self, album, title=None, artist=None, number=None, url=None, 
+                 genre=None, discnum=None, filesize=None, extension=None):
         super(Track, self).__init__(url=url)
         self.album = album
         self.title = title
-        self.number = number        
+        self.artist = artist        
+        self.number = number
+        self.genre = genre        
+        self.discnum = discnum
         self.filesize = filesize
         self.extension = extension
         
@@ -118,10 +121,13 @@ class Track(Downloadable):
             raise IOError('No write access to save dir.')      
         
         template = string.Template(settings.name_template)
-        sn = template.safe_substitute(artist=self.album.artist, 
+        sn = template.safe_substitute(artist=self.artist, 
                                       title=self.title,
                                       tracknum=self.number,
-                                      album=self.album.title)        
+                                      album=self.album.title,
+                                      album_artist=self.album.artist,
+                                      genre=self.genre,
+                                      discnum=self.discnum)        
         
         save_path = os.path.join(settings.save_dir, sn + '.' + self.extension)        
         super(Track, self).save(save_path, data)        

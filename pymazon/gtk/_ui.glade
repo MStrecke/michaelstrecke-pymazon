@@ -756,9 +756,15 @@ title
 
 artist
 
+album_artist
+
 album
 
+genre
+
 tracknum
+
+discnum
 
   
 Using Path Separators
