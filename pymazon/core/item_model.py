@@ -125,7 +125,7 @@ class Track(Downloadable):
                                       title=self.title,
                                       tracknum=self.number,
                                       album=self.album.title,
-                                      album_artist=self.album.artist,
+                                      albumartist=self.album.artist,
                                       genre=self.genre,
                                       discnum=self.discnum)        
         

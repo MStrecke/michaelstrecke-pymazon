@@ -135,7 +135,6 @@ class Downloader(threading.Thread):
         self.workers = []
         self.queue = deque(self.get_download_nodes())
                         
-        
         # don't launch more threads than we can use
         self.num_threads = min(settings.num_threads, len(self.queue))        
         self._abort = False

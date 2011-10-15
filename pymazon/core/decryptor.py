@@ -72,6 +72,12 @@ class AmzDecryptor(object):
         return buf.getvalue()
 
     def decrypt(self, amz_data):
+        # Amazon recently changed their .amz format to not be encrypted.
+        # Add a quick check for that in the hope we can still support
+        # both formats.
+        if '<playlist>' in amz_data:
+            return amz_data
+        
         try:
             d_obj = DES.new(self.KEY, DES.MODE_CBC, self.IV)
             cipher = base64.b64decode(amz_data)
