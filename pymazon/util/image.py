@@ -20,21 +20,21 @@ import urllib2
 
 
 class UrlImageCache:
-    '''A simple image cache for images residing at a url. 
-    Extremely simple to use. 
-    
+    '''A simple image cache for images residing at a url.
+    Extremely simple to use.
+
     cache = ImageCache()
     image = cache.get(url) # url is valid text url (http://www.foo.com/foo.jpg)
-    
-    The cache has no size limit and image live in the cache forever. Thus, 
-    this shouldn't be used for huge images if you value your memory. It is 
+
+    The cache has no size limit and image live in the cache forever. Thus,
+    this shouldn't be used for huge images if you value your memory. It is
     intended to cache small album art thumbnails.
-    
-    '''    
+
+    '''
     def __init__(self):
         self.cache = {}
 
-    def _download(self, url):        
+    def _download(self, url):
         handle = urllib2.urlopen(url)
         data = handle.read()
         handle.close()
@@ -43,11 +43,11 @@ class UrlImageCache:
     def _factory(self, url):
         try:
             pixbuf = self._download(url)
-        except urllib2.URLError:
+        except (urllib2.URLError, ValueError):
             pixbuf = ''
         return pixbuf
-            
+
     def get(self, url):
-        return self.cache.setdefault(url, self._factory(url))      
-        
+        return self.cache.setdefault(url, self._factory(url))
+
 url_image_cache = UrlImageCache()

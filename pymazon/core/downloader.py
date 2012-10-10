@@ -30,21 +30,21 @@ from pymazon.util.log_util import PymazonLogger
 logger = PymazonLogger('downloader')
 
 
-class _DownloadWorker(threading.Thread):    
+class _DownloadWorker(threading.Thread):
     def __init__(self, parent):
         super(_DownloadWorker, self).__init__()
-        self.parent = parent        
+        self.parent = parent
         self._abort = False
         self._pause = False
         self.node = None
-        
-        # just in case the amazon servers want to get sneaky and redirect 
+
+        # just in case the amazon servers want to get sneaky and redirect
         self.redirects = urllib2.HTTPRedirectHandler()
         self.cookies =  urllib2.HTTPCookieProcessor()
         self.opener = urllib2.build_opener(self.redirects, self.cookies)
 
-    def kill(self):        
-        self._abort = True   
+    def kill(self):
+        self._abort = True
 
     def run(self):
         while not self._abort:
@@ -52,18 +52,18 @@ class _DownloadWorker(threading.Thread):
             if not self.node:
                 break
             self.do_work()
-            
+
     def do_work(self):
-        obj = self.node.elem.obj        
-        
+        obj = self.node.elem.obj
+
         handle = self._connect(obj)
         if not handle:
-            return 
-        
-        data = self._download(obj, handle)        
+            return
+
+        data = self._download(obj, handle)
         if not data:
             return
-        
+
         try:
             obj.save(data)
         except IOError, e:
@@ -71,79 +71,109 @@ class _DownloadWorker(threading.Thread):
             obj.status = (0, 'Error!')
             self.parent.update(self.node)
             return
-        
+
         obj.status = (100, 'Complete!')
-        self.parent.update(self.node)        
-        
+        self.parent.update(self.node)
+
     def _connect(self, obj):
-        request = urllib2.Request(obj.url)        
+        request = urllib2.Request(obj.url)
         obj.status = (0, 'Connecting...')
         self.parent.update(self.node)
         try:
             handle = self.opener.open(request)
+
+            # if filesize has not been set by the amz file, try to
+            # extract the information from the return headers
+            if obj.filesize == '':
+                try:
+                    obj.filesize = int(handle.headers.get("content-length"))
+                except:
+                    pass        # if this doesn't work, filesize will still be set to ''
+
         except urllib2.URLError, e:
             logger.error('Opening request at url: %s \n %s \n' % (obj.url, e))
             obj.status = (0, 'Error!')
             self.parent.update(self.node)
             return
-        return handle   
+        return handle
 
     def _download(self, obj, handle):
-        fs = int(obj.filesize)
-        chunk_size = fs / 100 #1% of file per chunk              
+        def calcStatus(perc,full):
+            if full is None:
+                return (1,"%s bytes" % perc)
+            else:
+                perc = min(100,perc)
+                return (perc,"%s%%" % perc)
+
+        try:
+            fs = int(obj.filesize)
+            chunk_size = fs / 100       #1% of file per chunk
+        except (ValueError, TypeError):
+            # No filesize was given or not a number
+            fs = None
+            chunk_size = 50000          # arbitrary value
+
         buf = StringIO()
-        perc_complete = 0  
-        obj.status = (perc_complete, '%s%%' % perc_complete)
+
+        # if length is given, count perc_complete from 0 .. 100
+        # if length is None, contains number of bytes downloaded
+        perc_complete = 0
+
+        obj.status = calcStatus(perc_complete, fs)
         self.parent.update(self.node)
         try:
             while True:
                 if self._abort:
                     buf.close()
-                    return None                
+                    return None
                 chunk = handle.read(chunk_size)
                 if not chunk: # we got the whole file
                     break
                 buf.write(chunk)
-                perc_complete += 1
-                perc_complete = min(100, perc_complete)
-                obj.status = (perc_complete, '%s%%' % perc_complete)
-                self.parent.update(self.node)                
-        # purposely swallow any and all exceptions during downloading so 
+
+                if fs is None:
+                    perc_complete += len(chunk)
+                else:
+                    perc_complete += 1
+
+                obj.status = calcStatus(perc_complete, fs)
+                self.parent.update(self.node)
+        # purposely swallow any and all exceptions during downloading so
         # other tracks can continue
         except Exception, e:
             logger.error('Reading from opened url: %s \n %s\n' % (obj.url, e))
             obj.status = (0, 'Error!')
             self.parent.update(self.node)
             buf.close()
-            return           
+            return
         data = buf.getvalue()
-        buf.close()        
-        return data 
+        buf.close()
+        return data
 
 
 class Downloader(threading.Thread):
-    def __init__(self, tree, update_cb=lambda a: None, 
+    def __init__(self, tree, update_cb=lambda a: None,
                  finished_cb=lambda: None):
         super(Downloader, self).__init__()
-        
+
         if not isinstance(tree, TreeModel):
             raise ValueError('tree must be an instance of TreeModel')
-        
+
         self.tree = tree
         self.update_cb = update_cb
-        self.finished_cb = finished_cb   
+        self.finished_cb = finished_cb
         self.workers = []
         self.queue = deque(self.get_download_nodes())
-                        
+
         # don't launch more threads than we can use
-        self.num_threads = min(settings.num_threads, len(self.queue))        
+        self.num_threads = min(settings.num_threads, len(self.queue))
         self._abort = False
-        
+
     def get_download_nodes(self):
         def filter_func(node):
             return isinstance(node.elem.obj, Downloadable)
         return self.tree.filter_nodes(filter_func)
-        
+
     def update(self, node):
         self.update_cb(node)
         if node.parent:
