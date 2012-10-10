@@ -242,6 +242,7 @@ class MainWindow(gobject.GObject):
         parser = AmzParser()
         for f in amz_files:
             parser.parse(f)
+
         objects = parser.get_parsed_objects()
         self.tree_model = TreeModel(objects)
         self.treeView.set_model(self.tree_model)

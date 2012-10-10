@@ -22,17 +22,79 @@ from xml.parsers import expat
 from pymazon.core.decryptor import AmzDecryptor
 from pymazon.core.item_model import Album, OtherMedia, Track
 
+"""
+XML structure of AMZ file         (as of Oct. 2012)
+
+<playlist>
+   ...
+  <trackList>
+    <track>
+      <location>http://...</location>
+      <creator>...</creator>
+      <album>...</album>
+      <title>...</title>
+      <image>http://.....</image>
+      <duration>####</duration>
+      <trackNum>##</trackNum>
+      <meta rel="http://.../dmusic/ASIN">....</meta>
+      <meta rel="http://.../dmusic/productTypeName">DOWNLOADABLE_MUSIC_TRACK</meta>
+      <meta rel="http://.../dmusic/customerId">....</meta>
+      <meta rel="http://.../dmusic/primaryGenre">...</meta>
+      <meta rel="http://.../dmusic/discNum">2</meta>
+      <meta rel="http://.../dmusic/albumASIN">...</meta>
+      <meta rel="http://.../dmusic/albumPrimaryArtist">...</meta>
+      <meta rel="http://.../dmusic/trackType">mp3</meta>
+    </track>
+  </trackList>
+</playlist>
+
+Note:
+- The image tag is optional.
+- The image track is part of a track - not an album (in pymazon, the
+  image_url is part of an album!)
+
+The parser builds a list named 'parsed_objects', which looks like this:
+
+parsed_objects ---+-- Album
+                  |     |
+                  |     +---- Track
+                  |     |
+                  |     +---- Track
+                  |     |
+                  |     +---- OtherMedia (not MP3s - only if needed)
+                  |     |           |
+                  |     |           +--- non mp3 track
+                  |     |           |
+                  |     |           +--- non mp3 track
+                  |     |           |
+                  |     |            ...
+                  |     ...
+                  |
+                  +-- Album
+                  |     |
+                  |     +---- Track
+                  |     |
+                  ...   ...
+
+The "Album"s are created as needed (one for each new combination of
+album title and artist name).
+
+
+"""
 
 class ParseException(Exception):
     pass
 
-
-class AmzParser(object):    
+class AmzParser(object):
     def __init__(self):
-        self.parser = None        
-        self.parsed_objects = []
+        self.parser = None              # Parser
+        self.parsed_objects = []        # list of albums
         self.current_track = None
+
+        # We are using the expat parser. That means, we have to
+        # keep track of the current node ourself
         self.in_tracklist = False
+        self.in_extension = False
         self.now_url = False
         self.now_artist = False
         self.now_album = False
@@ -44,13 +106,24 @@ class AmzParser(object):
         self.now_genre = False
         self.now_discnum = False
         self.now_albumartist = False
-    
+        self.now_ASIN = False
+        self.now_albumASIN = False
+
     def start_element(self, name, attrs):
+        # we encountered the opening tag <name attr>
+
+        if name == "extension":
+            self.in_extension = True
+
+        if self.in_extension:               # do nothing while in extension
+            return
+
         if name == 'trackList':
-            self.in_tracklist = True        
+            self.in_tracklist = True
+
         if self.in_tracklist:
-            if name == 'track':            
-                self.current_track = defaultdict(str)
+            if name == 'track':
+                self.current_track = defaultdict(str)   # empty dict
             elif name == 'location':
                 self.now_url = True
             elif name == 'creator':
@@ -74,13 +147,27 @@ class AmzParser(object):
                     self.now_albumartist = True
                 elif attrs['rel'].endswith('discNum'):
                     self.now_discnum = True
-    
+                elif attrs['rel'].endswith('/ASIN'):
+                    self.now_ASIN = True
+                elif attrs['rel'].endswith('/albumASIN'):
+                    self.now_albumASIN = True
+
     def end_element(self, name):
+        # end tags </name> found
+
+        if name == "extension":
+            self.in_extension = False
+
+        if self.in_extension:           # do nothing while in extension
+            return
+
         if name == 'trackList':
             self.in_tracklist = False
+
         if self.in_tracklist:
             if name == 'track':
                 self.add_track()
+
             elif name == 'location':
                 self.now_url = False
             elif name == 'creator':
@@ -104,8 +191,17 @@ class AmzParser(object):
                     self.now_genre = False
                 elif self.now_albumartist:
                     self.now_albumartist = False
-    
-    def character_data(self, data):        
+                elif self.now_albumASIN:
+                    self.now_albumASIN = False
+                elif self.now_ASIN:
+                    self.now_ASIN = False
+
+    def character_data(self, data):
+        # text between tags
+
+        if self.in_extension:           # do nothing while in extension
+            return
+
         if self.now_url:
             self.current_track['url'] += data
         elif self.now_artist:
@@ -128,24 +224,35 @@ class AmzParser(object):
             self.current_track['genre'] += data
         elif self.now_albumartist:
             self.current_track['albumartist'] += data
-        
+        elif self.now_ASIN:
+            self.current_track['ASIN'] += data
+        elif self.now_albumASIN:
+            self.current_track['albumASIN'] += data
+
+
     def add_track(self):
+        # this routine is called with the closing tag </track>
+        # it scans the objects added so far (parsed_objects) for a suitable
+        # album. If it does not find one, it creates one.
+
         album = self.current_track['album']
         album_artist = self.current_track['albumartist']
-        # if the current track does not share the same artist 
+        # if the current track does not share the same artist
         # and album name as any existing album, create a new album.
         for obj in self.parsed_objects:
-            if isinstance(obj, Album):                
+            if isinstance(obj, Album):
                 if (obj.title == album) and (obj.artist == album_artist):
                     self.add_track_to_album(obj)
-                    return        
+                    return
+
         new_album = Album(title=album,
                           artist=album_artist,
                           image_url=self.current_track['image'])
         self.add_track_to_album(new_album)
         self.parsed_objects.append(new_album)
-                    
+
     def add_track_to_album(self, album):
+        # create a new Track to be added to the album
         new_track = Track(title=self.current_track['title'],
                           artist=self.current_track['artist'],
                           url=self.current_track['url'],
@@ -154,31 +261,41 @@ class AmzParser(object):
                           discnum=self.current_track['discnum'],
                           number=self.current_track['tracknum'],
                           filesize=self.current_track['filesize'],
-                          extension=self.current_track['tracktype'])
+                          extension=self.current_track['tracktype'],
+                          ASIN=self.current_track['ASIN'],
+                          albumASIN=self.current_track['albumASIN']
+                          )
+
         if new_track.extension not in ['mp3']:
+            # if not an MP3
+            # scan the tracks of the ALBUM for an OtherMedia entry, and add it there
             for track in album.tracks:
                 if isinstance(track, OtherMedia):
                     track.tracks.append(new_track)
                     return
                 else:
                     pass
+
+            # if there wasn't an OtherMedia entry,
+            # create one and add this track
             other_media = OtherMedia(tracks=[new_track])
             album.tracks.append(other_media)
         else:
-            album.tracks.append(new_track)        
-     
+            album.tracks.append(new_track)
+
     def create_new_parser(self):
         self.parser = expat.ParserCreate()
         self.parser.StartElementHandler = self.start_element
         self.parser.EndElementHandler = self.end_element
         self.parser.CharacterDataHandler = self.character_data
-        
+
     def parse(self, amz):
+        # read, decrypt, and parse amz file
         amz_data = open(amz).read()
         decryptor = AmzDecryptor()
         xml = decryptor.decrypt(amz_data)
         self.create_new_parser()
-        self.parser.Parse(xml)        
-        
+        self.parser.Parse(xml)
+
     def get_parsed_objects(self):
         return self.parsed_objects

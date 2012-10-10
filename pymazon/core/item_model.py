@@ -105,7 +105,7 @@ class Album(HasStatus):
 
 class Track(Downloadable):
     def __init__(self, album, title=None, artist=None, number=None, url=None,
-                 genre=None, discnum=None, filesize=None, extension=None):
+                 genre=None, discnum=None, filesize=None, extension=None, ASIN=None, albumASIN=None):
         super(Track, self).__init__(url=url)
         self.album = album
         self.title = title
@@ -115,6 +115,8 @@ class Track(Downloadable):
         self.discnum = discnum
         self.filesize = filesize
         self.extension = extension
+        self.ASIN = ASIN
+        self.albumASIN = albumASIN
 
     def save(self, data):
         if not os.access(settings.save_dir, os.W_OK):
